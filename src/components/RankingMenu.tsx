@@ -128,7 +128,7 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                                     {index === 2 && (
                                         <div className="relative w-[292px] h-[47px] mt-[5px] flex">
                                             <div className="relative h-[47px] w-[47px] bg-gradient-to-br from-[#f1a362] from-1%  via-50% via-[#ffe6d2] to-[#f1a362] to-90% rounded-l-[10px]">
-                                                <img src={""} alt="prize" className=" absolute h-[35px] w-[35px] left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2" />
+                                                <img src={getAssetUrl(GAME_ASSETS.thirdP)} alt="prize" className=" absolute h-[35px] w-[35px] left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2" />
                                             </div>
                                             <div className="relative flex h-[47px] w-[245px] bg-gradient-to-t from-[#f1a362]   to-[#fec79a] items-center rounded-r-[10px]">
                                                 <img src={resolveAssetUrl(element?.user?.avater ?? "")} alt="avatar" className="ml-[10px] h-[45px] w-[45px] rounded-full" />
