@@ -713,7 +713,7 @@ export default function Lucky777Game({
                                     duration: 0.7,
                                     ease: "easeOut",
                                 }} />
-                            <span className="pointer-events-none absolute top-[400px] right-1/4 text-[40px] z-[50]">{formatNumber(num)}</span>
+                            <span className="pointer-events-none absolute top-[400px] right-1/4 text-[40px] bg-gradient-to-t from-[#EFC32F] to-[#FBF9D2] bg-clip-text text-transparent z-[50]">{formatNumber(num)}</span>
                         </div>)}
                         {/* {isResulting&&!normalWin&&(
                             
