@@ -50,6 +50,7 @@ export function RectangleIcon() {
         </svg>
     )
 }
+
 export function DarkStarIcon() {
     return (
         <svg width="11" height="10" viewBox="0 0 11 10" fill="none" aria-hidden="true">

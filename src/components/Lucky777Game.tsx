@@ -97,6 +97,13 @@ export default function Lucky777Game({
     const [winModal, setWinModal] = useState(false)
     const isOverlayOpen = (activeModal !== null || prizeModal !== null || winModal === true);
     const gameScale = useResponsiveGameScale();
+    const dismissWinModal = (showFollowUpWinAni = true) => {
+        if (!winModal) {
+            return;
+        }
+        setWinModal(false);
+        setIsOpenWinAni(showFollowUpWinAni);
+    };
     useEffect(() => {
         const interval = setInterval(() => {
             if (ActivePlayers?.data?.[0]?.win_amount !== oldActivePlayer?.data?.[0]?.win_amount || ActivePlayers?.data?.[0]?.user_id !== oldActivePlayer?.data?.[0]?.user_id) setIsActivePlayer0(true)
@@ -145,6 +152,8 @@ export default function Lucky777Game({
                     setSecond(0)
                     return
                 }
+                setWinModal(false)
+                setIsOpenWinAni(false)
                 void placeBet(Number.parseFloat(betAmounts[currentBet]?.amount))
                     .then((response) => {
                         setEndValue([response.result.set_A[0].option_id, response.result.set_A[1].option_id, response.result.set_A[2].option_id,
@@ -235,10 +244,6 @@ export default function Lucky777Game({
                 }
             }
             else {
-                if (second === 4900) {
-                    setWinModal(false)
-                    setIsOpenWinAni(true)
-                }
                 if (second === 6900) {
                     if (isAutoMode) {
                         setSecond(-100)
@@ -381,11 +386,11 @@ export default function Lucky777Game({
                                     <div className="relative ">
                                         {ActivePlayers?.data?.[3] && <img src={resolveAssetUrl(ActivePlayers?.data?.[3]?.user?.avater)} alt="player" className="absolute border-[1px] border-[#b88425] top-[10px] left-[10px] h-[20px]  w-[20px]  z-30 rounded-full" />}
                                         {ActivePlayers?.data?.[4] && <img src={resolveAssetUrl(ActivePlayers?.data?.[4]?.user?.avater)} alt="player" className="absolute border-[1px] border-[#b88425] top-[10px] left-[20px] h-[20px]  w-[20px]  z-20 rounded-full" />}
-                                        {ActivePlayers?.data?.[3] && <div className="absolute top-[30px] inset-x-0 text-center">
+                                        {ActivePlayers?.data?.[0] && <div className="absolute top-[30px] inset-x-0 text-center">
                                             <span className="text-[8px]">Online : </span>
                                             <span className="text-[10px]">{ActivePlayers?.total_user}</span>
                                         </div>}
-                                        {isActivePlayer3 && ActivePlayers?.data?.[3] && < motion.span className="absolute left-[10px] top-[10px] z-[30] font-bold font-sans text-[#fac594] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]"
+                                        {isActivePlayer3 && ActivePlayers?.data?.[0] && < motion.span className="absolute left-[10px] top-[10px] z-[30] font-bold font-sans text-[#fac594] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]"
                                             initial={{ y: -5, }}
                                             animate={{ y: 5, }}
                                             transition={{
@@ -571,7 +576,7 @@ export default function Lucky777Game({
                                         <span className="bg-gradient-to-t from-[#EFC32F] to-[#FBF9D2] bg-clip-text text-transparent font-bold text-[17px] align-middle ">{formatNumber(Number(winToday))}</span>
                                     </div>
                                     <div className="bg-[#000000] h-[24px] w-[100px] rounded-[4px] text-center ">
-                                        {isResulting && winAmount > 0 && (<motion.img src={light} alt="light" className="absolute"
+                                        {isResulting && winAmount > 0 && (<motion.div className="absolute  "
                                             animate={{
                                                 opacity: [1, 0, 1, 0, 1, 0,],
                                                 filter: "brightness(5)"
@@ -580,7 +585,7 @@ export default function Lucky777Game({
                                                 duration: 2,
                                                 ease: "easeInOut",
                                                 repeat: Infinity
-                                            }} />)}
+                                            }} ></motion.div>)}
                                         <span className="bg-gradient-to-t from-[#EFC32F] to-[#FBF9D2] bg-clip-text text-transparent font-bold text-[17px] align-middle">{showWinAmount}</span>
                                     </div>
                                 </div>
@@ -627,11 +632,12 @@ export default function Lucky777Game({
                                     <img src={getAssetUrl(GAME_ASSETS.autoBtn)} alt="auto" />
                                 </button>
                                 <button
-                                    className={getClass("spin")}
+                                    className={`${getClass("spin")} ${winModal ? "z-[70]" : ""}`}
                                     onPointerDown={() => setPressedBtn("spin")}
                                     onPointerUp={() => setPressedBtn(null)}
                                     onPointerLeave={() => setPressedBtn(null)}
                                     onClick={() => {
+                                        dismissWinModal(false);
                                         setIsPlaying(true);
                                     }}
                                 >
@@ -639,10 +645,20 @@ export default function Lucky777Game({
                                 </button>
                             </div>
                         </div >
-                        {winModal && (<>
+                        {winModal && (<div
+                            className="absolute inset-0 z-[60]"
+                            onClick={() => dismissWinModal()}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter" || event.key === " ") {
+                                    dismissWinModal();
+                                }
+                            }}
+                        >
                             <RainMoney />
                             {normalResult === "BIG WIN" && (<>
-                                <motion.img src={getAssetUrl(GAME_ASSETS.bigWin)} alt="bigwin" className="absolute top-[130px] left-[0px] z-[50]"
+                                <motion.img src={getAssetUrl(GAME_ASSETS.bigWin)} alt="bigwin" className="pointer-events-none absolute top-[130px] left-[0px] z-[50]"
                                     initial={{ scale: 0 }}
                                     animate={{ scale: [1, 0.8, 1, 0.8, 1.2, 1] }}
                                     transition={{
@@ -650,7 +666,7 @@ export default function Lucky777Game({
                                         ease: "easeOut",
                                     }}
                                 />
-                                <motion.img src={getAssetUrl(GAME_ASSETS.bigWinDis)} alt="bigwinDis" className="absolute top-[400px] left-[70px] z-[50]"
+                                <motion.img src={getAssetUrl(GAME_ASSETS.bigWinDis)} alt="bigwinDis" className="pointer-events-none absolute top-[400px] left-[70px] z-[50]"
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
                                     transition={{
@@ -659,14 +675,14 @@ export default function Lucky777Game({
                                     }} />
                             </>)}
                             {normalResult === "SUPER WIN" && (<>
-                                <motion.img src={getAssetUrl(GAME_ASSETS.superWin)} alt="superWin" className="absolute top-[130px] left-[0px] z-[50]"
+                                <motion.img src={getAssetUrl(GAME_ASSETS.superWin)} alt="superWin" className="pointer-events-none absolute top-[130px] left-[0px] z-[50]"
                                     initial={{ scale: 0 }}
                                     animate={{ scale: [1, 0.8, 1, 0.8, 1] }}
                                     transition={{
                                         duration: 2,
                                         ease: "easeOut",
                                     }} />
-                                <motion.img src={getAssetUrl(GAME_ASSETS.superWinDis)} alt="superWinDis" className="absolute top-[400px] left-[70px] z-[50]"
+                                <motion.img src={getAssetUrl(GAME_ASSETS.superWinDis)} alt="superWinDis" className="pointer-events-none absolute top-[400px] left-[70px] z-[50]"
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
                                     transition={{
@@ -675,14 +691,14 @@ export default function Lucky777Game({
                                     }} />
                             </>)}
                             {normalResult === "MEGA WIN" && (<>
-                                <motion.img src={getAssetUrl(GAME_ASSETS.megaWin)} alt="megaWin" className="absolute top-[130px] left-[0px] z-[50]"
+                                <motion.img src={getAssetUrl(GAME_ASSETS.megaWin)} alt="megaWin" className="pointer-events-none absolute top-[130px] left-[0px] z-[50]"
                                     initial={{ scale: 0 }}
                                     animate={{ scale: [1, 0.8, 1, 0.8, 1] }}
                                     transition={{
                                         duration: 2,
                                         ease: "easeOut",
                                     }} />
-                                <motion.img src={getAssetUrl(GAME_ASSETS.megaWinDis)} alt="megaWinDis" className="absolute top-[400px] left-[70px] z-[50]"
+                                <motion.img src={getAssetUrl(GAME_ASSETS.megaWinDis)} alt="megaWinDis" className="pointer-events-none absolute top-[400px] left-[70px] z-[50]"
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
                                     transition={{
@@ -690,15 +706,15 @@ export default function Lucky777Game({
                                         ease: "easeOut",
                                     }} />
                             </>)}
-                            <motion.img src={getAssetUrl(GAME_ASSETS.diamond)} alt="diamond" className="absolute top-[400px] left-1/4 z-[50]"
+                            <motion.img src={getAssetUrl(GAME_ASSETS.diamond)} alt="diamond" className="pointer-events-none absolute top-[400px] left-1/4 z-[50]"
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
                                 transition={{
                                     duration: 0.7,
                                     ease: "easeOut",
                                 }} />
-                            <span className="absolute top-[400px] right-1/4 text-[40px] z-[50]">{formatNumber(num)}</span>
-                        </>)}
+                            <span className="pointer-events-none absolute top-[400px] right-1/4 text-[40px] z-[50]">{formatNumber(num)}</span>
+                        </div>)}
                         {/* {isResulting&&!normalWin&&(
                             
                         )} */}
