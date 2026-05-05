@@ -2,11 +2,56 @@ import { motion, } from "framer-motion";
 import { Fragment, useState, useEffect } from "react";
 import { useGame, resolveAssetUrl } from "../hooks/useGameHook";
 import { getAssetUrl, GAME_ASSETS } from "../config/gameconfig";
-export const Triangle: React.FC = () => {
+import React from "react";
+
+interface TriangleIconProps extends React.SVGProps<SVGSVGElement> {
+    className?: string;
+}
+
+export const TriangleIconL: React.FC<TriangleIconProps> = ({ className = "", ...props }) => {
     return (
-        <div className="w-0 h-0 z-[60] border-l-8 border-r-8 border-b-16 border-l-transparent color dome border-black"></div>
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 5 10"
+            className={`w-6 h-12 ${className}`}
+            {...props}
+        >
+            <defs>
+                <linearGradient id="triangleGradient" x1="1" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#000f8B" /> {/* dark blue */}
+                    <stop offset="100%" stopColor="#ADD8E6" /> {/* light blue */}
+                </linearGradient>
+            </defs>
+            <polygon
+                points="0,0 0,10 5,5"
+                fill="url(#triangleGradient)"
+            />
+        </svg>
     );
 };
+export const TriangleIconR: React.FC<TriangleIconProps> = ({ className = "", ...props }) => {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 5 10"
+            className={`w-6 h-12 ${className}`}
+            {...props}
+        >
+            <defs>
+                <linearGradient id="triangleGradient" x1="1" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#000f8B" /> {/* light blue */}
+                    <stop offset="100%" stopColor="#ADD8E6" /> {/* dark blue */}
+                </linearGradient>
+            </defs>
+            <polygon
+                points="0,5 5,0 5,10"
+                fill="url(#triangleGradient)"
+            />
+        </svg>
+    );
+};
+
+
 export function RectangleIcon() {
     return (
         <svg
@@ -50,7 +95,6 @@ export function RectangleIcon() {
         </svg>
     )
 }
-
 export function DarkStarIcon() {
     return (
         <svg width="11" height="10" viewBox="0 0 11 10" fill="none" aria-hidden="true">
@@ -78,6 +122,82 @@ export function BlueStarIcon() {
                 points="5.5,0.8 6.7,3.2 9.4,3.6 7.45,5.45 7.9,8.1 5.5,6.85 3.1,8.1 3.55,5.45 1.6,3.6 4.3,3.2"
                 fill="#2b67d6"
             />
+        </svg>
+    );
+}
+
+export function LightAsset({ className = "" }: { className?: string }) {
+    return (
+        <svg
+            width="98"
+            height="26"
+            viewBox="0 0 98 26"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className={className}
+            aria-hidden="true"
+        >
+            <defs>
+                <linearGradient id="light-band-top" x1="49" y1="0" x2="49" y2="15" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#FFF9DB" stopOpacity="0.02" />
+                    <stop offset="0.24" stopColor="#FFFFFF" stopOpacity="0.52" />
+                    <stop offset="0.48" stopColor="#FFF6B5" stopOpacity="0.96" />
+                    <stop offset="0.74" stopColor="#F8D537" stopOpacity="0.42" />
+                    <stop offset="1" stopColor="#A35B05" stopOpacity="0" />
+                </linearGradient>
+                <linearGradient id="light-band-bottom" x1="49" y1="10" x2="49" y2="26" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#A35B05" stopOpacity="0" />
+                    <stop offset="0.28" stopColor="#F8D537" stopOpacity="0.42" />
+                    <stop offset="0.52" stopColor="#FFF6B5" stopOpacity="0.96" />
+                    <stop offset="0.78" stopColor="#FFFFFF" stopOpacity="0.52" />
+                    <stop offset="1" stopColor="#FFF9DB" stopOpacity="0.02" />
+                </linearGradient>
+                <linearGradient id="light-edge-fade" x1="0" y1="13" x2="98" y2="13" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#000000" stopOpacity="0" />
+                    <stop offset="0.12" stopColor="#FFFFFF" stopOpacity="0.78" />
+                    <stop offset="0.5" stopColor="#FFFFFF" />
+                    <stop offset="0.88" stopColor="#FFFFFF" stopOpacity="0.78" />
+                    <stop offset="1" stopColor="#000000" stopOpacity="0" />
+                </linearGradient>
+                <radialGradient id="light-hot-core" cx="0" cy="0" r="1" gradientTransform="translate(49 13) scale(51 7.2)" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#FFFFFF" />
+                    <stop offset="0.2" stopColor="#FFFCE9" stopOpacity="0.92" />
+                    <stop offset="0.58" stopColor="#FFE168" stopOpacity="0.48" />
+                    <stop offset="1" stopColor="#FFB300" stopOpacity="0" />
+                </radialGradient>
+                <mask id="light-mask">
+                    <rect width="98" height="26" fill="url(#light-edge-fade)" />
+                </mask>
+                <filter id="light-grain" x="-10" y="-10" width="118" height="46" colorInterpolationFilters="sRGB">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.06 0.95" numOctaves="4" seed="14" result="noise" />
+                    <feColorMatrix
+                        in="noise"
+                        type="matrix"
+                        values="0 0 0 0 1
+                                0 0 0 0 0.9
+                                0 0 0 0 0.28
+                                0 0 0 0.34 0"
+                        result="goldNoise"
+                    />
+                    <feBlend in="SourceGraphic" in2="goldNoise" mode="screen" />
+                </filter>
+                <pattern id="light-pattern-top" patternUnits="userSpaceOnUse" width="98" height="15">
+                    <rect width="98" height="15" fill="url(#light-band-top)" />
+                    <rect x="-10" y="5" width="118" height="5" fill="url(#light-hot-core)" opacity="0.95" />
+                    <path d="M2 8C17 3 30 14 45 8S74 3 96 8" stroke="#FFFFFF" strokeOpacity="0.34" strokeWidth="2" />
+                    <path d="M8 4C23 10 41 1 55 7S80 15 92 5" stroke="#FFD75A" strokeOpacity="0.26" strokeWidth="3" />
+                </pattern>
+                <pattern id="light-pattern-bottom" patternUnits="userSpaceOnUse" width="98" height="16">
+                    <rect width="98" height="16" fill="url(#light-band-bottom)" />
+                    <rect x="-10" y="6" width="118" height="5" fill="url(#light-hot-core)" opacity="0.95" />
+                    <path d="M1 7C16 13 31 2 45 8S75 14 97 7" stroke="#FFFFFF" strokeOpacity="0.34" strokeWidth="2" />
+                    <path d="M7 12C22 5 40 16 55 9S79 1 93 11" stroke="#FFD75A" strokeOpacity="0.26" strokeWidth="3" />
+                </pattern>
+            </defs>
+            <g opacity="0.7" mask="url(#light-mask)" filter="url(#light-grain)">
+                <rect y="10" width="98" height="16" fill="url(#light-pattern-bottom)" />
+                <rect width="98" height="15" transform="matrix(1 0 0 -1 0 15)" fill="url(#light-pattern-top)" />
+            </g>
         </svg>
     );
 }

@@ -9,8 +9,7 @@ import { GAME_ASSETS, getAssetUrl } from "../config/gameconfig";
 import { type ActivePlayers } from "../api/api"
 import MenuCoin from "./MenuCoin";
 import MenuTop from "./MenuTop";
-import light from "../assets/Body/BodyPlayboard/Light.svg"
-import { ResultPending, LightsAni, WinAni, RiseAni, RainMoney, StartAni, StopAni, RepeatAni, PendingStar, RollingStar, ResultStar, TopBottomAni, BottomTopAni, TopAni, MiddleAni, BottomAni } from "./Assets";
+import { TriangleIconR, TriangleIconL, ResultPending, LightsAni, WinAni, RiseAni, RainMoney, StartAni, StopAni, RepeatAni, PendingStar, RollingStar, ResultStar, TopBottomAni, BottomTopAni, TopAni, MiddleAni, BottomAni, LightAsset } from "./Assets";
 import { useGame, resolveAssetUrl } from "../hooks/useGameHook";
 const GAME_WIDTH = 393;
 const GAME_HEIGHT = 589;
@@ -546,6 +545,18 @@ export default function Lucky777Game({
                                     </div>
                                 </div>
                             </div>
+                            <div className="absolute top-[200px] left-[9px]">
+                                <div className="absolute">
+                                    <TriangleIconL />
+                                </div>
+                                <span className="absolute text-[15px] left-[5px] top-[14px] font-bold">5</span>
+                            </div>
+                            <div className="absolute top-[200px] right-[32px]">
+                                <div className="absolute ">
+                                    <TriangleIconR />
+                                </div>
+                                <span className="absolute text-[15px] left-[11px] top-[14px] font-bold">5</span>
+                            </div>
                             <div className="absolute h-[226px] w-[310px] left-1/2 top-[97px] -translate-x-1/2  inset-[2px] rounded-[7px]" >
                                 {isResulting && !resultPending && winAmount > 0 && ((endValue[0] === endValue[4] && endValue[0] === endValue[8]) || (endValue[0] === 17 && endValue[4] === 17)) && (
                                     <TopBottomAni />)}
@@ -576,7 +587,7 @@ export default function Lucky777Game({
                                         <span className="bg-gradient-to-t from-[#EFC32F] to-[#FBF9D2] bg-clip-text text-transparent font-bold text-[17px] align-middle ">{formatNumber(Number(winToday))}</span>
                                     </div>
                                     <div className="bg-[#000000] h-[24px] w-[100px] rounded-[4px] text-center ">
-                                        {isResulting && winAmount > 0 && (<motion.div className="absolute  "
+                                        {isResulting && winAmount > 0 && (<motion.div className="absolute"
                                             animate={{
                                                 opacity: [1, 0, 1, 0, 1, 0,],
                                                 filter: "brightness(5)"
@@ -585,7 +596,9 @@ export default function Lucky777Game({
                                                 duration: 2,
                                                 ease: "easeInOut",
                                                 repeat: Infinity
-                                            }} ></motion.div>)}
+                                            }} >
+                                            <LightAsset />
+                                        </motion.div>)}
                                         <span className="bg-gradient-to-t from-[#EFC32F] to-[#FBF9D2] bg-clip-text text-transparent font-bold text-[17px] align-middle">{showWinAmount}</span>
                                     </div>
                                 </div>
