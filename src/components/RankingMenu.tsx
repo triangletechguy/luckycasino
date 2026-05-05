@@ -105,10 +105,10 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                                                 <img src={getAssetUrl(GAME_ASSETS.first)} alt="prize" className=" absolute h-[35px] w-[35px] left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2" />
                                             </div>
                                             <div className="relative flex h-[47px] w-[245px] bg-gradient-to-t from-[#FBBA07]   to-[#FFF987] items-center rounded-r-[10px] {resolveAssetUrl(rankingToday[0].player?.">
-                                                <img src={resolveAssetUrl(element?.user?.avater ?? "")} alt="avatar" className="border-[1px] border-[#ffa806] ml-[10px] h-[45px] w-[45px] rounded-full" />
-                                                <span className="absolute left-[60px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{element?.user?.username}</span>
+                                                <img src={resolveAssetUrl(element?.user?.avater ?? "")} alt="avatar" className="ml-[10px] h-[45px] w-[45px] rounded-full" />
+                                                <span className="absolute left-[60px] text-[#fde4c7] font-bold  h-[40px] w-[80px] content-center">{element?.user?.username}</span>
                                                 <img src={getAssetUrl(GAME_ASSETS.diamond)} alt="diamond" className="absolute left-[130px] h-[30px] w-[30px]" />
-                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{Number(element?.total_win)}</span>
+                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold  h-[40px] w-[80px] content-center">{element?.total_win}</span>
                                             </div>
                                         </div>
                                     )}
@@ -118,10 +118,10 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                                                 <img src={getAssetUrl(GAME_ASSETS.second)} alt="prize" className=" absolute h-[35px] w-[35px] left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2" />
                                             </div>
                                             <div className="relative flex h-[47px] w-[245px] bg-gradient-to-t from-[#7fd5fd]   to-[#b8d6f8] items-center rounded-r-[10px]">
-                                                <img src={resolveAssetUrl(element?.user?.avater ?? "")} alt="avatar" className="border-[1px] border-[#ffa806] ml-[10px] h-[45px] w-[45px] rounded-full" />
-                                                <span className="absolute left-[60px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{element?.user?.username}</span>
+                                                <img src={resolveAssetUrl(element?.user?.avater ?? "")} alt="avatar" className="ml-[10px] h-[45px] w-[45px] rounded-full" />
+                                                <span className="absolute left-[60px] text-[#fde4c7] font-bold  h-[40px] w-[80px] content-center">{element?.user?.username}</span>
                                                 <img src={getAssetUrl(GAME_ASSETS.diamond)} alt="diamond" className="absolute left-[130px] h-[30px] w-[30px]" />
-                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{Number(element.total_win)}</span>
+                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold  h-[40px] w-[80px] content-center">{element.total_win}</span>
                                             </div>
                                         </div>
                                     )}
@@ -131,10 +131,10 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                                                 <img src={getAssetUrl(GAME_ASSETS.thirdP)} alt="prize" className=" absolute h-[35px] w-[35px] left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2" />
                                             </div>
                                             <div className="relative flex h-[47px] w-[245px] bg-gradient-to-t from-[#f1a362]   to-[#fec79a] items-center rounded-r-[10px]">
-                                                <img src={resolveAssetUrl(element?.user?.avater ?? "")} alt="avatar" className="border-[1px] border-[#ffa806] ml-[10px] h-[45px] w-[45px] rounded-full" />
-                                                <span className="absolute left-[60px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{element?.user?.username}</span>
+                                                <img src={resolveAssetUrl(element?.user?.avater ?? "")} alt="avatar" className="ml-[10px] h-[45px] w-[45px] rounded-full" />
+                                                <span className="absolute left-[60px] text-[#fde4c7] font-bold  h-[40px] w-[80px] content-center">{element?.user?.username}</span>
                                                 <img src={getAssetUrl(GAME_ASSETS.diamond)} alt="diamond" className="absolute left-[130px] h-[30px] w-[30px]" />
-                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{Number(element.total_win)}</span>
+                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold  h-[40px] w-[80px] content-center">{element.total_win}</span>
                                             </div>
                                         </div>
                                     )}
@@ -144,10 +144,10 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                                                 {index + 1}
                                             </div>
                                             <div className="relative flex h-[47px] w-[245px] bg-gradient-to-t from-[#d6b579]   to-[#fffae6] items-center rounded-r-[10px]">
-                                                <img src={resolveAssetUrl(element?.user?.avater ?? "")} alt="avatar" className="border-[1px] border-[#ffa806] ml-[10px] h-[45px] w-[45px] rounded-full" />
-                                                <span className="absolute left-[60px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] h-[40px] w-[80px] content-center">{element?.user?.username}</span>
+                                                <img src={resolveAssetUrl(element?.user?.avater ?? "")} alt="avatar" className=" ml-[10px] h-[45px] w-[45px] rounded-full" />
+                                                <span className="absolute left-[60px] text-[#fde4c7] font-bold  h-[40px] w-[80px] content-center">{element?.user?.username}</span>
                                                 <img src={getAssetUrl(GAME_ASSETS.diamond)} alt="diamond" className="absolute left-[130px] h-[30px] w-[30px]" />
-                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] h-[40px] w-[80px] content-center">{Number(element.total_win)}</span>
+                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold  h-[40px] w-[80px] content-center">{element.total_win}</span>
                                             </div>
                                         </div>
                                     )}
@@ -214,26 +214,12 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                 </div>
                 <div className="absolute flex items-center top-[232px] left-1/2 -translate-x-1/2 w-[316px] h-[48px] bg-gradient-to-br from-[#FBBA07] from-1%  via-30% via-[#FFF987] to-[#D5831F] to-90% rounded-[9px]">
                     <div className="absolute flex items-center top-[2px] left-1/2 -translate-x-1/2 w-[312px] h-[44px] bg-gradient-to-t from-[#D2D9FF] to-[#4C2EDE] rounded-[9px]">
-                        {ranking?.today_my_ranking?.position !== undefined && <>
-                            {ranking?.today_my_ranking?.position === 1 && <div className="relative content-center pl-[10px] h-[47px] w-[47px] font-sans text-[#ffcf68] text-[20px] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px]">
-                                <img src={getAssetUrl(GAME_ASSETS.first)} alt="third" />
-                            </div>}
-                            {ranking?.today_my_ranking?.position === 2 && <div className="relative content-center pl-[10px] h-[47px] w-[47px] font-sans text-[#ffcf68] text-[20px] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px]">
-                                <img src={getAssetUrl(GAME_ASSETS.second)} alt="third" />
-                            </div>}
-                            {ranking?.today_my_ranking?.position === 3 && <div className="relative content-center pl-[10px] h-[47px] w-[47px] font-sans text-[#ffcf68] text-[20px] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px]">
-                                <img src={getAssetUrl(GAME_ASSETS.thirdP)} alt="third" />
-                            </div>}
-                            {(ranking?.today_my_ranking?.position > 3 && ranking?.today_my_ranking?.position < 100) && <div className="relative content-center pl-[20px] h-[47px] w-[47px] font-sans text-[#ffcf68] text-[20px] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px]">
-                                {ranking?.today_my_ranking?.position}
-                            </div>}
-                            {ranking?.today_my_ranking?.position === 0 && <div className="relative content-center pl-[20px] h-[47px] w-[47px] font-sans text-[#ffcf68] text-[20px] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px]">
-                                +99
-                            </div>}</>}
-                        <img src={resolveAssetUrl(ranking?.today_my_ranking?.avater ?? "")} alt="avatar" className=" ml-[10px] h-[45px] w-[45px] border-[1px] border-[#ffa806] rounded-full" />
-                        <span className="absolute left-[110px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] h-[40px] w-[80px] content-center">{ranking?.today_my_ranking?.username}</span>
-                        <img src={getAssetUrl(GAME_ASSETS.diamond)} alt="diamond" className="absolute left-[190px] h-[30px] w-[30px]" />
-                        <span className="absolute left-[220px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] h-[40px] w-[80px] content-center">{Number(ranking?.today_my_ranking?.total_win)}</span>
+                        <div className="relative content-center pl-[20px] h-[47px] w-[47px] font-sans text-[#ffcf68] text-[20px] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px]">
+                            99+
+                        </div>
+                        <span className="text-[#A45721] font-bold">Sumiya BD</span>
+                        {/* <img src="" alt="" /> */}
+                        <span></span>
                     </div>
                 </div>
                 <div className="absolute top-[284px] left-1/2 -translate-x-1/2 w-[269px]  h-[31px] justify-between flex">

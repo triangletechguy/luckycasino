@@ -150,18 +150,10 @@ export type RankingItem = {
 export type RankingResponse = {
   status?: boolean;
   today?: RankingItem[];
-  today_my_ranking?:{
-    position:number;
-    user_id:number;
-    username:string;
-    avater:string;
-    total_win:string;
-    total_bet:string;
-  };
   yesterday?: RankingItem[];
 };
 export const fetchRanking= async (): Promise<RankingResponse> => {
-  const response = await axios.get<RankingResponse>(`${RANKING_API_URL}/${getUserId()}`);
+  const response = await axios.get<RankingResponse>(RANKING_API_URL);
   if (!response.data.status) {
     // throw new Error(response.data.message || "Failed to load ranking today");
     console.log("ranking today error")

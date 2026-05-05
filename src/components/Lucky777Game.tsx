@@ -10,7 +10,7 @@ import { type ActivePlayers } from "../api/api"
 import MenuCoin from "./MenuCoin";
 import MenuTop from "./MenuTop";
 import light from "../assets/Body/BodyPlayboard/Light.svg"
-import { ResultPending, LightsAni, WinAni, RiseAni, RainMoney, StartAni, StopAni, RepeatAni, PendingStar, RollingStar, ResultStar, TopBottomAni, BottomTopAni, TopAni, MiddleAni, BottomAni } from "./Assets";
+import { ResultPending, Triangle, LightsAni, WinAni, RiseAni, RainMoney, StartAni, StopAni, RepeatAni, PendingStar, RollingStar, ResultStar, TopBottomAni, BottomTopAni, TopAni, MiddleAni, BottomAni } from "./Assets";
 import { useGame, resolveAssetUrl } from "../hooks/useGameHook";
 const GAME_WIDTH = 393;
 const GAME_HEIGHT = 589;
@@ -72,7 +72,7 @@ export default function Lucky777Game({
     const [resultPending, setResultPending] = useState(false)
     const [isAutoMode, setIsAutoMode] = useState(false)
     const [isPlaying, setIsPlaying] = useState(false)
-    const { betAmounts, options, ranking, placeBet, playerInfo, ActivePlayers, handleWinToday, handlePlayerInfo } = useGame()
+    const { betAmounts, options, placeBet, playerInfo, ActivePlayers, handleWinToday, handlePlayerInfo } = useGame()
     const [currentBet, setCurrentBet] = useState(0)
     const [second, setSecond] = useState(0);
     const [startValue, setStartValue] = useState([13, 13, 13, 14, 14, 14, 15, 15, 15,])
@@ -266,12 +266,11 @@ export default function Lucky777Game({
     }, [second, isPlaying])
 
     const getClass = (name: string) => {
-        const pressedClass = pressedBtn === name ? "top-[10px]" : "top-0";
         if (isAutoMode) {
-            return `relative ${pressedClass} mx-[4px] transition-all ${name !== "auto" ? "brightness-50" : ""
+            return `relative mx-[4px] transition ${name !== "auto" ? "brightness-50" : ""
                 }`;
         }
-        return `relative ${pressedClass} mx-[4px] transition-all ${pressedBtn && pressedBtn !== name ? "brightness-50" : ""
+        return `relative mx-[4px] transition ${pressedBtn && pressedBtn !== name ? "brightness-50" : ""
             }`;
     };
 
@@ -320,9 +319,8 @@ export default function Lucky777Game({
                                             transition={{
                                                 rotate: { repeat: Infinity, duration: 1, ease: "linear" },
                                             }} />}
-                                    {ranking?.today_my_ranking?.position !== undefined && ranking?.today_my_ranking?.position < 100 && <span className="absolute top-[55px] left-1/2 -translate-x-1/2 z-[20] font-bold font-sans text-[#ffffff] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]">{ranking.today_my_ranking.position}</span>}
-                                    {ranking?.today_my_ranking?.position !== undefined && ranking?.today_my_ranking?.position > 99 && <span className="absolute top-[55px] left-1/2 -translate-x-1/2 z-[20] font-bold font-sans text-[#ffffff] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]">+99</span>}
-                                    {isResulting && winAmount > 0 && !resultPending && <RiseAni left={30} top={-35} />}
+                                    <span className="absolute top-[55px] left-1/2 -translate-x-1/2 z-[20] font-bold font-sans text-[#ffffff] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]">+99</span>
+                                    {isResulting && winAmount > 0 && <RiseAni left={30} top={-35} />}
                                     {isResulting && !resultPending && winAmount > 0 && <motion.span className="absolute z-[20] font-bold font-sans text-[#fac594] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]"
                                         initial={{ y: -5, }}
                                         animate={{ y: 5, }}
@@ -385,7 +383,7 @@ export default function Lucky777Game({
                                             <span className="text-[8px]">Online : </span>
                                             <span className="text-[10px]">{ActivePlayers?.total_user}</span>
                                         </div>}
-                                        {isActivePlayer3 && ActivePlayers?.data?.[3] && < motion.span className="absolute left-[10px] top-[10px] z-[30] font-bold font-sans text-[#fac594] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]"
+                                        {isActivePlayer3 && < motion.span className="absolute left-[10px] top-[10px] z-[30] font-bold font-sans text-[#fac594] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]"
                                             initial={{ y: -5, }}
                                             animate={{ y: 5, }}
                                             transition={{
@@ -540,6 +538,7 @@ export default function Lucky777Game({
                                         )}
                                     </div>
                                 </div>
+                                <Triangle />
                             </div>
                             <div className="absolute h-[226px] w-[310px] left-1/2 top-[97px] -translate-x-1/2  inset-[2px] rounded-[7px]" >
                                 {isResulting && !resultPending && winAmount > 0 && ((endValue[0] === endValue[4] && endValue[0] === endValue[8]) || (endValue[0] === 17 && endValue[4] === 17)) && (
@@ -619,6 +618,7 @@ export default function Lucky777Game({
                                             setIsAutoMode(false);
                                             setPressedBtn(null)
                                         } else {
+                                            setPressedBtn("auto")
                                             setIsAutoMode(true);
                                             setIsPlaying(true);
                                         }
