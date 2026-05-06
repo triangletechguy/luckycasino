@@ -504,7 +504,7 @@ export default function Lucky777Game({
                                                                 style={{ left: `${26}px`, top: `${10 + Math.floor(index / 3) * 70}px`, }}
                                                                 animate={{
                                                                     opacity: [1, 0, 1, 0,],
-                                                                    filter: "brightness(5)"
+                                                                    // filter: "brightness(5)"
                                                                 }}
                                                                 transition={{
                                                                     duration: 2,
@@ -523,7 +523,7 @@ export default function Lucky777Game({
                                                                 style={{ left: `${123}px`, top: `${10 + Math.floor(index / 3) * 70}px` }}
                                                                 animate={{
                                                                     opacity: [1, 0, 1, 0,],
-                                                                    filter: "brightness(5)"
+                                                                    // filter: "brightness(5)"
                                                                 }}
                                                                 transition={{
                                                                     duration: 2,
@@ -542,7 +542,7 @@ export default function Lucky777Game({
                                                                 style={{ left: `${218}px`, top: `${10 + Math.floor(index / 3) * 70}px` }}
                                                                 animate={{
                                                                     opacity: [1, 0, 1, 0,],
-                                                                    filter: "brightness(5)"
+                                                                    // filter: "brightness(5)"
                                                                 }}
                                                                 transition={{
                                                                     duration: 2,
