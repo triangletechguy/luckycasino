@@ -189,6 +189,8 @@ export default function Lucky777Game({
                         response.result.set_B[0].option_id, response.result.set_B[1].option_id, response.result.set_B[2].option_id,
                         response.result.set_C[0].option_id, response.result.set_C[1].option_id, response.result.set_C[2].option_id,])
                         setWinAmount(Number.parseFloat(response.win_amount))
+                        setActiveModal(null)
+                        setPrizeModal(null)
                         setNormalResult(response.win_type);
                         if (response.win_type === null) setNormalWin(true)
                         else setNormalWin(false)
