@@ -14,39 +14,50 @@ import { useGame, resolveAssetUrl } from "../hooks/useGameHook";
 const GAME_WIDTH = 393;
 const GAME_HEIGHT = 589;
 
-function getGameScale() {
+function getGameViewport() {
     if (typeof window === "undefined") {
-        return 1;
+        return {
+            gameScale: 1,
+            viewportHeight: GAME_HEIGHT,
+            viewportOffsetTop: 0,
+        };
     }
 
     const viewport = window.visualViewport;
     const viewportWidth = viewport?.width ?? window.innerWidth;
     const viewportHeight = viewport?.height ?? window.innerHeight;
+    const widthScale = viewportWidth / GAME_WIDTH;
+    const heightScale = viewportHeight / GAME_HEIGHT;
+    const nextScale = Math.min(widthScale, heightScale);
 
-    return viewportWidth / GAME_WIDTH;
+    return {
+        gameScale: Number.isFinite(nextScale) && nextScale > 0 ? nextScale : 1,
+        viewportHeight,
+        viewportOffsetTop: viewport?.offsetTop ?? 0,
+    };
 }
 
-function useResponsiveGameScale() {
-    const [gameScale, setGameScale] = useState(getGameScale);
+function useResponsiveGameViewport() {
+    const [gameViewport, setGameViewport] = useState(getGameViewport);
 
     useEffect(() => {
-        const updateScale = () => {
-            setGameScale(getGameScale());
+        const updateViewport = () => {
+            setGameViewport(getGameViewport());
         };
 
-        updateScale();
-        window.addEventListener("resize", updateScale);
-        window.visualViewport?.addEventListener("resize", updateScale);
-        window.visualViewport?.addEventListener("scroll", updateScale);
+        updateViewport();
+        window.addEventListener("resize", updateViewport);
+        window.visualViewport?.addEventListener("resize", updateViewport);
+        window.visualViewport?.addEventListener("scroll", updateViewport);
 
         return () => {
-            window.removeEventListener("resize", updateScale);
-            window.visualViewport?.removeEventListener("resize", updateScale);
-            window.visualViewport?.removeEventListener("scroll", updateScale);
+            window.removeEventListener("resize", updateViewport);
+            window.visualViewport?.removeEventListener("resize", updateViewport);
+            window.visualViewport?.removeEventListener("scroll", updateViewport);
         };
     }, []);
 
-    return gameScale;
+    return gameViewport;
 }
 
 function formatNumber(num: number): string {
@@ -95,7 +106,7 @@ export default function Lucky777Game({
     const [num, setNum] = useState(0);
     const [winModal, setWinModal] = useState(false)
     const isOverlayOpen = (activeModal !== null || prizeModal !== null || winModal === true);
-    const gameScale = useResponsiveGameScale();
+    const { gameScale, viewportHeight, viewportOffsetTop } = useResponsiveGameViewport();
     const spinSoundRef = useRef<HTMLAudioElement>(null);
     const skipNextSpinStartSoundRef = useRef(false);
     const playSpinSound = () => {
@@ -310,7 +321,13 @@ export default function Lucky777Game({
 
     return (
         <div className="relative flex min-h-[100dvh] w-full items-end justify-center overflow-hidden">
-            <div className="fixed inset-0 flex items-end justify-center overflow-hidden ">
+            <div
+                className="fixed left-0 right-0 flex items-end justify-center overflow-hidden"
+                style={{
+                    top: `${viewportOffsetTop}px`,
+                    height: `${viewportHeight}px`,
+                }}
+            >
                 <div
                     className="relative shrink-0"
                     style={{
