@@ -99,6 +99,9 @@ export default function Lucky777Game({
     const spinSoundRef = useRef<HTMLAudioElement>(null);
     const skipNextSpinStartSoundRef = useRef(false);
     const playSpinSound = () => {
+        if (!isMusicPlaying)
+            return
+
         const audio = spinSoundRef.current;
         if (!audio) {
             return;
