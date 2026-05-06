@@ -13,18 +13,28 @@ export const TriangleIconL: React.FC<TriangleIconProps> = ({ className = "", ...
         <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 5 10"
-            className={`w-6 h-12 ${className}`}
+            className={`w-6 h-12 overflow-visible ${className}`}
             {...props}
         >
             <defs>
-                <linearGradient id="triangleGradient" x1="1" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#000f8B" /> {/* dark blue */}
-                    <stop offset="100%" stopColor="#ADD8E6" /> {/* light blue */}
+                <linearGradient id="triangleGradientL" x1="1" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#FFF8B8" />
+                    <stop offset="38%" stopColor="#FFD84F" />
+                    <stop offset="66%" stopColor="#E79A12" />
+                    <stop offset="100%" stopColor="#8A4A00" />
                 </linearGradient>
+                <filter id="triangleGlowL" x="-80%" y="-45%" width="260%" height="190%" colorInterpolationFilters="sRGB">
+                    <feDropShadow dx="0" dy="0" stdDeviation="0.55" floodColor="#FFF4A8" floodOpacity="1" />
+                    <feDropShadow dx="0" dy="0" stdDeviation="1.3" floodColor="#FFC329" floodOpacity="0.85" />
+                    <feDropShadow dx="0" dy="0" stdDeviation="2.4" floodColor="#F38A00" floodOpacity="0.5" />
+                </filter>
             </defs>
             <polygon
                 points="0,0 0,10 5,5"
-                fill="url(#triangleGradient)"
+                fill="url(#triangleGradientL)"
+                stroke="#FFF6A8"
+                strokeWidth="0.18"
+                filter="url(#triangleGlowL)"
             />
         </svg>
     );
@@ -34,18 +44,28 @@ export const TriangleIconR: React.FC<TriangleIconProps> = ({ className = "", ...
         <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 5 10"
-            className={`w-6 h-12 ${className}`}
+            className={`w-6 h-12 overflow-visible ${className}`}
             {...props}
         >
             <defs>
-                <linearGradient id="triangleGradient" x1="1" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#000f8B" /> {/* light blue */}
-                    <stop offset="100%" stopColor="#ADD8E6" /> {/* dark blue */}
+                <linearGradient id="triangleGradientR" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#FFF8B8" />
+                    <stop offset="38%" stopColor="#FFD84F" />
+                    <stop offset="66%" stopColor="#E79A12" />
+                    <stop offset="100%" stopColor="#8A4A00" />
                 </linearGradient>
+                <filter id="triangleGlowR" x="-80%" y="-45%" width="260%" height="190%" colorInterpolationFilters="sRGB">
+                    <feDropShadow dx="0" dy="0" stdDeviation="0.55" floodColor="#FFF4A8" floodOpacity="1" />
+                    <feDropShadow dx="0" dy="0" stdDeviation="1.3" floodColor="#FFC329" floodOpacity="0.85" />
+                    <feDropShadow dx="0" dy="0" stdDeviation="2.4" floodColor="#F38A00" floodOpacity="0.5" />
+                </filter>
             </defs>
             <polygon
                 points="0,5 5,0 5,10"
-                fill="url(#triangleGradient)"
+                fill="url(#triangleGradientR)"
+                stroke="#FFF6A8"
+                strokeWidth="0.18"
+                filter="url(#triangleGlowR)"
             />
         </svg>
     );

@@ -1,11 +1,11 @@
 import { AnimatePresence, motion, } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import RechargeMenu from "./RechargeMenu";
 import HelpMenu from "./HelpMenu";
 import HistoryMenu from "./HistoryMenu";
 import Ranking from "./RankingMenu";
 import PrizeDistribution from "./PrizeDistribution";
-import { GAME_ASSETS, getAssetUrl } from "../config/gameconfig";
+import { GAME_ASSETS, GAME_MUSIC, getAssetUrl, getMusicUrl } from "../config/gameconfig";
 import { type ActivePlayers } from "../api/api"
 import MenuCoin from "./MenuCoin";
 import MenuTop from "./MenuTop";
@@ -96,6 +96,25 @@ export default function Lucky777Game({
     const [winModal, setWinModal] = useState(false)
     const isOverlayOpen = (activeModal !== null || prizeModal !== null || winModal === true);
     const gameScale = useResponsiveGameScale();
+    const spinSoundRef = useRef<HTMLAudioElement>(null);
+    const skipNextSpinStartSoundRef = useRef(false);
+    const playSpinSound = () => {
+        const audio = spinSoundRef.current;
+        if (!audio) {
+            return;
+        }
+
+        try {
+            audio.pause();
+            audio.currentTime = 0;
+        } catch {
+            audio.load();
+        }
+
+        void audio.play().catch((err) => {
+            console.warn("Spin sound blocked:", err);
+        });
+    };
     const dismissWinModal = (showFollowUpWinAni = true) => {
         if (!winModal) {
             return;
@@ -146,6 +165,11 @@ export default function Lucky777Game({
             return
         const timer = setInterval(() => {
             if (second === 0) {
+                if (skipNextSpinStartSoundRef.current) {
+                    skipNextSpinStartSoundRef.current = false;
+                } else {
+                    playSpinSound();
+                }
                 if (Number.parseFloat(playerInfo?.balance ?? "0") < Number.parseFloat(betAmounts[currentBet]?.amount)) {
                     setIsPlaying(false)
                     setSecond(0)
@@ -639,6 +663,8 @@ export default function Lucky777Game({
                                             setIsAutoMode(false);
                                             setPressedBtn(null)
                                         } else {
+                                            playSpinSound();
+                                            skipNextSpinStartSoundRef.current = true;
                                             setIsAutoMode(true);
                                             setIsPlaying(true);
                                         }
@@ -652,6 +678,8 @@ export default function Lucky777Game({
                                     onPointerUp={() => setPressedBtn(null)}
                                     onPointerLeave={() => setPressedBtn(null)}
                                     onClick={() => {
+                                        playSpinSound();
+                                        skipNextSpinStartSoundRef.current = true;
                                         dismissWinModal(false);
                                         setIsPlaying(true);
                                     }}
@@ -810,6 +838,12 @@ export default function Lucky777Game({
                         {isResulting && winAmount > 0 && !isWinAniShowed && isOpenWinAni && (
                             <WinAni />
                         )}
+                        <audio
+                            ref={spinSoundRef}
+                            src={getMusicUrl(GAME_MUSIC.sound)}
+                            preload="auto"
+                            playsInline
+                        />
                     </div>
                 </div>
             </div >

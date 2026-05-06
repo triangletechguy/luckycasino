@@ -73,7 +73,8 @@ export function getAssetUrl(path: string): string {
   return `${ASSET_BASE_URL}${normalizedPath}`;
 }
 
-export const MUSIC_BASE_URL = `${BACKEND_ORIGIN}/core/storage/app/public/sound/`;
+export const MUSIC_BASE_URL = `${BACKEND_ORIGIN}/core/storage/app/public/super777/`;
+export const SOUND_BASE_URL = `${BACKEND_ORIGIN}/core/storage/app/public/super777/`;
 
 export function getMusicUrl(path: string): string {
   if (!path) {
@@ -85,7 +86,7 @@ export function getMusicUrl(path: string): string {
   }
 
   const normalizedPath = path.replace(/^\/+/, "");
-  const storagePrefix = "core/storage/app/public/sound/";
+  const storagePrefix = "core/storage/app/public/super777/";
   const storagePathIndex = normalizedPath.indexOf(storagePrefix);
 
   if (storagePathIndex >= 0) {
@@ -96,7 +97,8 @@ export function getMusicUrl(path: string): string {
 }
 
 export const GAME_MUSIC ={
-  music: "fruit-music.mp3",
+  sound: "supper7.mp3",
+  music: "super7.mp3",
 }
 
 export const GAME_ASSETS = {
