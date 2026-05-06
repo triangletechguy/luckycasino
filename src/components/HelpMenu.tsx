@@ -62,60 +62,60 @@ export default function HelpMenu({ onCloseHelpModal }: HelpMenuProps) {
             </div>
             <div className="absolute top-[91px] left-[12px] grid grid-cols-2 grid-rows-4 gap-[10px]">
                 <div className="relative flex bg-[#000000]/25 h-[34px] w-[180px] rounded-[5px] items-center ">
-                    <img src={resolveAssetUrl(options[0].logo)} alt="Ring" className="relative  left-[5px] w-[24px] h-[24px]" />
-                    <img src={resolveAssetUrl(options[0].logo)} alt="Ring" className="relative left-[5px] w-[24px] h-[24px]" />
-                    <img src={resolveAssetUrl(options[0].logo)} alt="Ring" className="relative left-[5px] w-[24px] h-[24px]" />
+                    <img src={resolveAssetUrl(options[1].logo)} alt="Ring" className="relative  left-[5px] w-[24px] h-[24px]" />
+                    <img src={resolveAssetUrl(options[1].logo)} alt="Ring" className="relative left-[5px] w-[24px] h-[24px]" />
+                    <img src={resolveAssetUrl(options[1].logo)} alt="Ring" className="relative left-[5px] w-[24px] h-[24px]" />
                     <span className="relative left-[8px] top-[3px] w-[24px] h-[24px]">=</span>
-                    <span className="absolute left-[85px] "
-                        style={{ fontFamily: "MyBoldFont", letterSpacing: "0px", fontSize: "16px", color: "gold" }}>{1000000}</span>
+                    <span className="absolute left-[90px] "
+                        style={{ fontFamily: "MyBoldFont", letterSpacing: "0px", fontSize: "16px", color: "gold" }}>{200000}</span>
                 </div>
                 <div className="relative flex bg-[#000000]/25 h-[34px] w-[180px] rounded-[5px]  items-center">
-                    <img src={resolveAssetUrl(options[1].logo)} alt="Seven" className="relative left-[5px] w-[24px] h-[24px]" />
-                    <img src={resolveAssetUrl(options[1].logo)} alt="Seven" className="relative left-[5px] w-[24px] h-[24px]" />
-                    <img src={resolveAssetUrl(options[1].logo)} alt="Seven" className="relative left-[5px] w-[24px] h-[24px]" />
+                    <img src={resolveAssetUrl(options[0].logo)} alt="Seven" className="relative left-[5px] w-[24px] h-[24px]" />
+                    <img src={resolveAssetUrl(options[0].logo)} alt="Seven" className="relative left-[5px] w-[24px] h-[24px]" />
+                    <img src={resolveAssetUrl(options[0].logo)} alt="Seven" className="relative left-[5px] w-[24px] h-[24px]" />
                     <span className="relative left-[8px] top-[3px] w-[24px] h-[24px]">=</span>
-                    <span className="absolute left-[89px] "
-                        style={{ fontFamily: "MyBoldFont", letterSpacing: "1px", fontSize: "16px", color: "gold" }}>{300000}</span>
+                    <span className="absolute left-[92px] "
+                        style={{ fontFamily: "MyBoldFont", letterSpacing: "3px", fontSize: "16px", color: "gold" }}>{60000}</span>
                 </div>
                 <div className="relative flex bg-[#000000]/25 h-[34px] w-[180px] rounded-[5px] items-center">
                     <img src={resolveAssetUrl(options[2].logo)} alt="Diamond" className="relative left-[5px] w-[24px] h-[24px]" />
                     <img src={resolveAssetUrl(options[2].logo)} alt="Diamond" className="relative left-[5px] w-[24px] h-[24px]" />
                     <img src={resolveAssetUrl(options[2].logo)} alt="Diamond" className="relative left-[5px] w-[24px] h-[24px]" />
                     <span className="relative left-[8px] top-[3px] w-[24px] h-[24px]">=</span>
-                    <span className="absolute left-[85px] "
-                        style={{ fontFamily: "MyBoldFont", letterSpacing: "2px", fontSize: "16px", color: "gold" }}>{100000}</span>
+                    <span className="absolute left-[90px] "
+                        style={{ fontFamily: "MyBoldFont", letterSpacing: "2px", fontSize: "16px", color: "gold" }}>{20000}</span>
                 </div>
                 <div className="relative flex bg-[#000000]/25 h-[34px] w-[180px] rounded-[5px] items-center">
                     <img src={resolveAssetUrl(options[3].logo)} alt="Watermelon" className="relative left-[5px] w-[24px] h-[24px]" />
                     <img src={resolveAssetUrl(options[3].logo)} alt="Watermelon" className="relative left-[5px] w-[24px] h-[24px]" />
                     <img src={resolveAssetUrl(options[3].logo)} alt="Watermelon" className="relative left-[5px] w-[24px] h-[24px]" />
                     <span className="relative left-[8px] top-[3px] w-[24px] h-[24px]">=</span>
-                    <span className="absolute left-[90px] "
-                        style={{ fontFamily: "MyBoldFont", letterSpacing: "3px", fontSize: "16px", color: "gold" }}>{50000}</span>
+                    <span className="absolute left-[88px] "
+                        style={{ fontFamily: "MyBoldFont", letterSpacing: "3px", fontSize: "16px", color: "gold" }}>{10000}</span>
                 </div>
                 <div className="relative flex bg-[#000000]/25 h-[34px] w-[180px] rounded-[5px] items-center">
-                    <img src={resolveAssetUrl(options[6].logo)} alt="Grape" className="relative left-[5px] w-[24px] h-[24px]" />
-                    <img src={resolveAssetUrl(options[6].logo)} alt="Grape" className="relative left-[5px] w-[24px] h-[24px]" />
-                    <img src={resolveAssetUrl(options[6].logo)} alt="Grape" className="relative left-[5px] w-[24px] h-[24px]" />
+                    <img src={resolveAssetUrl(options[5].logo)} alt="Grape" className="relative left-[5px] w-[24px] h-[24px]" />
+                    <img src={resolveAssetUrl(options[5].logo)} alt="Grape" className="relative left-[5px] w-[24px] h-[24px]" />
+                    <img src={resolveAssetUrl(options[5].logo)} alt="Grape" className="relative left-[5px] w-[24px] h-[24px]" />
                     <span className="relative left-[8px] top-[3px] w-[24px] h-[24px]">=</span>
                     <span className="absolute left-[90px] "
-                        style={{ fontFamily: "MyBoldFont", letterSpacing: "3px", fontSize: "16px", color: "gold" }}>{30000}</span>
+                        style={{ fontFamily: "MyBoldFont", letterSpacing: "3px", fontSize: "16px", color: "gold" }}>{6000}</span>
                 </div>
                 <div className="relative flex bg-[#000000]/25 h-[34px] w-[180px] rounded-[5px] items-center">
-                    <img src={resolveAssetUrl(options[5].logo)} alt="Peach" className="relative left-[5px] w-[24px] h-[24px]" />
-                    <img src={resolveAssetUrl(options[5].logo)} alt="Peach" className="relative left-[5px] w-[24px] h-[24px]" />
-                    <img src={resolveAssetUrl(options[5].logo)} alt="Peach" className="relative left-[5px] w-[24px] h-[24px]" />
+                    <img src={resolveAssetUrl(options[6].logo)} alt="Peach" className="relative left-[5px] w-[24px] h-[24px]" />
+                    <img src={resolveAssetUrl(options[6].logo)} alt="Peach" className="relative left-[5px] w-[24px] h-[24px]" />
+                    <img src={resolveAssetUrl(options[6].logo)} alt="Peach" className="relative left-[5px] w-[24px] h-[24px]" />
                     <span className="relative left-[8px] top-[3px] w-[24px] h-[24px]">=</span>
                     <span className="absolute left-[90px] "
-                        style={{ fontFamily: "MyBoldFont", letterSpacing: "3px", fontSize: "16px", color: "gold" }}>{15000}</span>
+                        style={{ fontFamily: "MyBoldFont", letterSpacing: "3px", fontSize: "16px", color: "gold" }}>{3000}</span>
                 </div>
                 <div className="relative flex bg-[#000000]/25 h-[34px] w-[180px] rounded-[5px] items-center">
                     <img src={resolveAssetUrl(options[4].logo)} alt="Cherry" className="relative left-[5px] w-[24px] h-[24px]" />
                     <img src={resolveAssetUrl(options[4].logo)} alt="Cherry" className="relative left-[5px] w-[24px] h-[24px]" />
                     <img src={resolveAssetUrl(options[4].logo)} alt="Cherry" className="relative left-[5px] w-[24px] h-[24px]" />
                     <span className="relative left-[8px] top-[3px] w-[24px] h-[24px]">=</span>
-                    <span className="absolute left-[95px] "
-                        style={{ fontFamily: "MyBoldFont", letterSpacing: "3px", fontSize: "16px", color: "gold" }}>{5000}</span>
+                    <span className="absolute left-[90px] "
+                        style={{ fontFamily: "MyBoldFont", letterSpacing: "3px", fontSize: "16px", color: "gold" }}>{1000}</span>
                 </div>
                 <div className="relative flex bg-[#000000]/25 h-[34px] w-[180px] rounded-[5px] items-center">
                     <img src={resolveAssetUrl(options[4].logo)} alt="Cherry" className="relative left-[5px] w-[24px] h-[24px]" />
@@ -123,7 +123,7 @@ export default function HelpMenu({ onCloseHelpModal }: HelpMenuProps) {
                     <div className="relative left-[5px] w-[24px] h-[24px] bg-[#FFFFFF]/20 font-[#FFFFFF] text-[7px] text-white pl-[4px] content-center">ANY</div>
                     <span className="relative left-[8px] top-[3px] w-[24px] h-[24px]">=</span>
                     <span className="absolute left-[95px] "
-                        style={{ fontFamily: "MyBoldFont", letterSpacing: "3px", fontSize: "16px", color: "gold" }}>{5000}</span>
+                        style={{ fontFamily: "MyBoldFont", letterSpacing: "3px", fontSize: "16px", color: "gold" }}>{600}</span>
                 </div>
             </div>
         </div >

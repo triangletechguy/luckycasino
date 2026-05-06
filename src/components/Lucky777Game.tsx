@@ -324,8 +324,10 @@ export default function Lucky777Game({
                                             transition={{
                                                 rotate: { repeat: Infinity, duration: 1, ease: "linear" },
                                             }} />}
-                                    {ranking?.today_my_ranking?.position !== undefined && ranking?.today_my_ranking?.position < 100 && <span className="absolute top-[55px] left-1/2 -translate-x-1/2 z-[20] font-bold font-sans text-[#ffffff] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]">{ranking.today_my_ranking.position}</span>}
-                                    {ranking?.today_my_ranking?.position !== undefined && ranking?.today_my_ranking?.position > 99 && <span className="absolute top-[55px] left-1/2 -translate-x-1/2 z-[20] font-bold font-sans text-[#ffffff] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]">+99</span>}
+                                    {ranking?.today_my_ranking?.position === undefined ? <span className="absolute top-[55px] left-1/2 -translate-x-1/2 z-[20] font-bold font-sans text-[#ffffff] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]"></span> : <>
+                                        {ranking?.today_my_ranking?.position !== undefined && ranking?.today_my_ranking?.position < 100 && <span className="absolute top-[55px] left-1/2 -translate-x-1/2 z-[20] font-bold font-sans text-[#ffffff] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]">{ranking.today_my_ranking.position}</span>}
+                                        {ranking?.today_my_ranking?.position !== undefined && ranking?.today_my_ranking?.position > 99 && <span className="absolute top-[55px] left-1/2 -translate-x-1/2 z-[20] font-bold font-sans text-[#ffffff] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]">99+</span>}
+                                    </>}
                                     {isResulting && winAmount > 0 && !resultPending && <RiseAni left={30} top={-35} />}
                                     {isResulting && !resultPending && winAmount > 0 && <motion.span className="absolute z-[20] font-bold font-sans text-[#fac594] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]"
                                         initial={{ y: -5, }}
@@ -344,7 +346,7 @@ export default function Lucky777Game({
                                         {ActivePlayers?.data?.[0] && <> <img src={resolveAssetUrl(ActivePlayers?.data?.[0]?.user?.avater)} alt="player" className="absolute left-1/2 -translate-x-1/2 border-[1px] border-[#b88425] w-[40px] h-[40px] rounded-full" />
                                             <span className="absolute inset-x-0 text-center top-[35px] font-blod font-sans text-[12px]">{ActivePlayers?.data?.[0]?.user?.username}</span>
                                             {isActivePlayer0 && <><RiseAni left={25} top={-50} />
-                                                <motion.span className="absolute left-[10px] top-[10px]  z-[20] font-bold font-sans text-[#fac594] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]"
+                                                <motion.span className="absolute left-[10px] top-[10px]  z-[20] font-bold font-sans al text-[#fac594] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]"
                                                     initial={{ y: -5, }}
                                                     animate={{ y: 5, }}
                                                     transition={{
