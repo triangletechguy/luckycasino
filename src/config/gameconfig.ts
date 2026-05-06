@@ -125,4 +125,5 @@ coin:"super777/gold.png",
 first:"super777/1st-position.svg",
 second:"super777/2nd-possition.svg",
 thirdP:"super777/3rd-position.svg",
+  shine:"super777/shine-role.svg"
     } as const;

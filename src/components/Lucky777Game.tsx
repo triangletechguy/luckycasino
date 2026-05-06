@@ -616,7 +616,7 @@ export default function Lucky777Game({
                                         <span className="bg-gradient-to-t from-[#EFC32F] to-[#FBF9D2] bg-clip-text text-transparent font-bold text-[17px] align-middle ">{formatNumber(Number(winToday))}</span>
                                     </div>
                                     <div className="bg-[#000000] h-[24px] w-[100px] rounded-[4px] text-center ">
-                                        {isResulting && winAmount > 0 && (<motion.div className="absolute"
+                                        {isResulting && winAmount > 0 && (<motion.img src={getAssetUrl(GAME_ASSETS.shine)} alt="shine" className="absolute"
                                             animate={{
                                                 opacity: [1, 0, 1, 0, 1, 0,],
                                                 filter: "brightness(5)"
@@ -626,8 +626,7 @@ export default function Lucky777Game({
                                                 ease: "easeInOut",
                                                 repeat: Infinity
                                             }} >
-                                            <LightAsset />
-                                        </motion.div>)}
+                                        </motion.img>)}
                                         <span className="bg-gradient-to-t from-[#EFC32F] to-[#FBF9D2] bg-clip-text text-transparent font-bold text-[17px] align-middle">{showWinAmount}</span>
                                     </div>
                                 </div>
@@ -759,7 +758,13 @@ export default function Lucky777Game({
                                     duration: 0.7,
                                     ease: "easeOut",
                                 }} />
-                            <span className="pointer-events-none absolute top-[400px] right-1/4 text-[40px] bg-gradient-to-t from-[#EFC32F] to-[#FBF9D2] bg-clip-text text-transparent z-[50]">{formatNumber(num)}</span>
+                            <motion.span className="pointer-events-none absolute top-[400px] right-1/4 text-[40px] bg-gradient-to-t from-[#EFC32F] to-[#FBF9D2] bg-clip-text text-transparent z-[50]"
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{
+                                    duration: 0.7,
+                                    ease: "easeOut",
+                                }} >{formatNumber(num)}</motion.span>
                         </div>)}
                         {/* {isResulting&&!normalWin&&(
                             
