@@ -598,7 +598,7 @@ export default function Lucky777Game({
                                 {isResulting && !resultPending && winAmount > 0 && ((endValue[6] === endValue[7] && endValue[6] === endValue[8]) || (endValue[6] === 17 && endValue[7] === 17)) && (
                                     <BottomAni />)}
                                 {resultPending &&
-                                    <ResultPending status={statusArray} />
+                                    <ResultPending status={startValue} />
                                 }
                             </div>
                             <div className="absolute left-[39px] top-[322px] h-[40px] w-[315px] grid grid-row-2">
