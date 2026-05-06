@@ -342,11 +342,11 @@ export default function Lucky777Game({
                             </button>
                             <div className="absolute h-[66px] w-[266px] top-[30px] left-[91px] bg-gradient-to-t from-[#0E0038] to-[#140433] rounded-[4px]">
                                 <div className="relative grid grid-cols-4 justify-center h-[60px] w-[260px] pt-[2px] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-t from-[#1A0D38] to-[#160A38] border-2 border-[#A75991] rounded-[4px]">
-                                    <div className="relative items-center justify-center">
+                                    <div className="relative  items-center justify-center">
                                         {ActivePlayers?.data?.[0] && <> <img src={resolveAssetUrl(ActivePlayers?.data?.[0]?.user?.avater)} alt="player" className="absolute left-1/2 -translate-x-1/2 border-[1px] border-[#b88425] w-[40px] h-[40px] rounded-full" />
                                             <span className="absolute inset-x-0 text-center top-[35px] font-blod font-sans text-[12px]">{ActivePlayers?.data?.[0]?.user?.username}</span>
                                             {isActivePlayer0 && <><RiseAni left={25} top={-50} />
-                                                <motion.span className="absolute left-[10px] top-[10px]  z-[20] font-bold font-sans al text-[#fac594] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]"
+                                                <motion.span className="absolute h-[40px] w-[40px] left-[12px] text-center top-[10px]  z-[20] font-bold font-sans al text-[#fac594] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]"
                                                     initial={{ y: -5, }}
                                                     animate={{ y: 5, }}
                                                     transition={{
@@ -360,7 +360,7 @@ export default function Lucky777Game({
                                         {ActivePlayers?.data?.[1] && <><img src={resolveAssetUrl(ActivePlayers?.data?.[1]?.user?.avater)} alt="player" className="absolute border-[1px] border-[#b88425] left-1/2 -translate-x-1/2  w-[40px] h-[40px]  rounded-full" />
                                             <span className="absolute inset-x-0 text-center top-[35px] font-blod font-sans text-[12px] align-middle ">{ActivePlayers?.data?.[1]?.user?.username}</span>
                                             {isActivePlayer1 && <><RiseAni left={25} top={-50} />
-                                                <motion.span className="absolute left-[10px] top-[10px] z-[20] font-bold font-sans text-[#fac594] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]"
+                                                <motion.span className="absolute h-[40px] w-[40px] left-[12px] text-center top-[10px] z-[20] font-bold font-sans text-[#fac594] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]"
                                                     initial={{ y: -5, }}
                                                     animate={{ y: 5, }}
                                                     transition={{
@@ -374,7 +374,7 @@ export default function Lucky777Game({
                                         {ActivePlayers?.data?.[2] && <> <img src={resolveAssetUrl(ActivePlayers?.data?.[2]?.user?.avater)} alt="player" className="absolute left-1/2 border-[1px] border-[#b88425] -translate-x-1/2  w-[40px] h-[40px]  rounded-full" />
                                             <span className="absolute inset-x-0 text-center top-[35px] font-blod font-sans text-[12px] algin-middle ">{ActivePlayers?.data?.[2]?.user?.username}</span>
                                             {isActivePlayer2 && <><RiseAni left={25} top={-50} />
-                                                <motion.span className="absolute left-[10px] top-[10px] z-[20] font-bold font-sans text-[#fac594] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]"
+                                                <motion.span className="absolute h-[40px] w-[40px] left-[12px] text-center top-[10px] z-[20] font-bold font-sans text-[#fac594] [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown]"
                                                     initial={{ y: -5, }}
                                                     animate={{ y: 5, }}
                                                     transition={{
