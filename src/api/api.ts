@@ -147,10 +147,7 @@ export type RankingItem = {
     avater: string;
   };
 };
-export type RankingResponse = {
-  status?: boolean;
-  today?: RankingItem[];
-   today_my_ranking?:{
+type MyRanking={
     position:number;
     user_id:number;
     username:string;
@@ -158,7 +155,13 @@ export type RankingResponse = {
     total_win:string;
     total_bet:string;
   };
+export type RankingResponse = {
+  status?: boolean;
+  gift?:string;
+  today?: RankingItem[];
+  today_my_ranking?:MyRanking|null;
   yesterday?: RankingItem[];
+  yesterday_my_ranking?:MyRanking|null;
 };
 export const fetchRanking= async (): Promise<RankingResponse> => {
   const response = await axios.get<RankingResponse>(`${RANKING_API_URL}/${getUserId()}`);

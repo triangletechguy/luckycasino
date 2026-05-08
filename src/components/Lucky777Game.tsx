@@ -283,6 +283,9 @@ export default function Lucky777Game({
                 }
             }
             else {
+                if (second === 5900) {
+                    setForCoinBoard(0)
+                }
                 if (second === 6900) {
                     if (isAutoMode) {
                         setSecond(-100)
@@ -312,10 +315,10 @@ export default function Lucky777Game({
     const getClass = (name: string) => {
         const pressedClass = pressedBtn === name ? "top-[10px]" : "top-0";
         if (isAutoMode) {
-            return `relative ${pressedClass} mx-[4px] transition-all ${name !== "auto" ? "brightness-50" : ""
-                }`;
+            return `relative ${pressedClass} mx-[4px] transition-all ${name === "spin" ? "brightness-50" : ""
+                } ${pressedBtn && pressedBtn === name ? "brightness-50" : ""}`;
         }
-        return `relative ${pressedClass} mx-[4px] transition-all ${pressedBtn && pressedBtn !== name ? "brightness-50" : ""
+        return `relative ${pressedClass} mx-[4px] transition-all ${pressedBtn && pressedBtn === name ? "brightness-50" : ""
             }`;
     };
 
