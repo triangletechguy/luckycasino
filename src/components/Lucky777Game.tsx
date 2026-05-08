@@ -1,18 +1,18 @@
 import { AnimatePresence, motion, } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
-import RechargeMenu from "./RechargeMenu";
-import HelpMenu from "./HelpMenu";
-import HistoryMenu from "./HistoryMenu";
-import Ranking from "./RankingMenu";
-import PrizeDistribution from "./PrizeDistribution";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { GAME_ASSETS, GAME_MUSIC, getAssetUrl, getMusicUrl } from "../config/gameconfig";
 import { type ActivePlayers } from "../api/api"
 import MenuCoin from "./MenuCoin";
 import MenuTop from "./MenuTop";
-import { TriangleIconR, TriangleIconL, ResultPending, LightsAni, WinAni, RiseAni, RainMoney, StartAni, StopAni, RepeatAni, PendingStar, RollingStar, ResultStar, TopBottomAni, BottomTopAni, TopAni, MiddleAni, BottomAni, LightAsset } from "./Assets";
+import { TriangleIconR, TriangleIconL, ResultPending, LightsAni, WinAni, RiseAni, RainMoney, StartAni, StopAni, RepeatAni, PendingStar, RollingStar, ResultStar, TopBottomAni, BottomTopAni, TopAni, MiddleAni, BottomAni } from "./Assets";
 import { useGame, resolveAssetUrl } from "../hooks/useGameHook";
 const GAME_WIDTH = 393;
 const GAME_HEIGHT = 589;
+const RechargeMenu = lazy(() => import("./RechargeMenu"));
+const HelpMenu = lazy(() => import("./HelpMenu"));
+const HistoryMenu = lazy(() => import("./HistoryMenu"));
+const Ranking = lazy(() => import("./RankingMenu"));
+const PrizeDistribution = lazy(() => import("./PrizeDistribution"));
 
 function getGameViewport() {
     if (typeof window === "undefined") {
@@ -171,9 +171,6 @@ export default function Lucky777Game({
 
         return () => clearInterval(interval);
     }, [winModal]);
-    useEffect(() => {
-        console.log(ActivePlayers)
-    }, [ActivePlayers])
     useEffect(() => {
         if (!isPlaying)
             return
@@ -488,36 +485,36 @@ export default function Lucky777Game({
                                         </>
                                     )}
                                     {isRolling && (<>
-                                        <StartAni left={26} delay={0} num0={startValue[0]} num1={startValue[3]} num2={startValue[6]} />
-                                        <StartAni left={123} delay={0.3} num0={startValue[1]} num1={startValue[4]} num2={startValue[7]} />
-                                        <StartAni left={218} delay={0.6} num0={startValue[2]} num1={startValue[5]} num2={startValue[8]} />
-                                        <RepeatAni left={26} delay={0} num={4} />
-                                        <RepeatAni left={123} delay={0.3} num={1} />
-                                        <RepeatAni left={218} delay={0.6} num={3} />
-                                        <RepeatAni left={26} delay={0.3} num={1} />
-                                        <RepeatAni left={123} delay={0.6} num={4} />
-                                        <RepeatAni left={218} delay={0.9} num={2} />
-                                        <RepeatAni left={26} delay={0.6} num={4} />
-                                        <RepeatAni left={123} delay={0.9} num={5} />
-                                        <RepeatAni left={218} delay={1.2} num={4} />
-                                        <RepeatAni left={26} delay={0.9} num={2} />
-                                        <RepeatAni left={123} delay={1.2} num={4} />
-                                        <RepeatAni left={218} delay={1.5} num={5} />
-                                        <RepeatAni left={26} delay={1.2} num={2} />
-                                        <RepeatAni left={123} delay={1.5} num={4} />
-                                        <RepeatAni left={218} delay={1.8} num={5} />
-                                        <RepeatAni left={26} delay={1.5} num={2} />
-                                        <RepeatAni left={123} delay={1.8} num={1} />
-                                        <RepeatAni left={218} delay={2.1} num={5} />
-                                        <RepeatAni left={26} delay={1.8} num={6} />
-                                        <RepeatAni left={123} delay={2.1} num={7} />
-                                        <RepeatAni left={218} delay={2.4} num={3} />
-                                        <RepeatAni left={26} delay={2.1} num={3} />
-                                        <RepeatAni left={123} delay={2.4} num={4} />
-                                        <RepeatAni left={218} delay={2.7} num={2} />
-                                        <StopAni left={26} delay={2.4} num0={endValue[6]} num1={endValue[3]} num2={endValue[0]} />
-                                        <StopAni left={123} delay={2.7} num0={endValue[7]} num1={endValue[4]} num2={endValue[1]} />
-                                        <StopAni left={218} delay={3.0} num0={endValue[8]} num1={endValue[5]} num2={endValue[2]} />
+                                        <StartAni options={options} left={26} delay={0} num0={startValue[0]} num1={startValue[3]} num2={startValue[6]} />
+                                        <StartAni options={options} left={123} delay={0.3} num0={startValue[1]} num1={startValue[4]} num2={startValue[7]} />
+                                        <StartAni options={options} left={218} delay={0.6} num0={startValue[2]} num1={startValue[5]} num2={startValue[8]} />
+                                        <RepeatAni options={options} left={26} delay={0} num={4} />
+                                        <RepeatAni options={options} left={123} delay={0.3} num={1} />
+                                        <RepeatAni options={options} left={218} delay={0.6} num={3} />
+                                        <RepeatAni options={options} left={26} delay={0.3} num={1} />
+                                        <RepeatAni options={options} left={123} delay={0.6} num={4} />
+                                        <RepeatAni options={options} left={218} delay={0.9} num={2} />
+                                        <RepeatAni options={options} left={26} delay={0.6} num={4} />
+                                        <RepeatAni options={options} left={123} delay={0.9} num={5} />
+                                        <RepeatAni options={options} left={218} delay={1.2} num={4} />
+                                        <RepeatAni options={options} left={26} delay={0.9} num={2} />
+                                        <RepeatAni options={options} left={123} delay={1.2} num={4} />
+                                        <RepeatAni options={options} left={218} delay={1.5} num={5} />
+                                        <RepeatAni options={options} left={26} delay={1.2} num={2} />
+                                        <RepeatAni options={options} left={123} delay={1.5} num={4} />
+                                        <RepeatAni options={options} left={218} delay={1.8} num={5} />
+                                        <RepeatAni options={options} left={26} delay={1.5} num={2} />
+                                        <RepeatAni options={options} left={123} delay={1.8} num={1} />
+                                        <RepeatAni options={options} left={218} delay={2.1} num={5} />
+                                        <RepeatAni options={options} left={26} delay={1.8} num={6} />
+                                        <RepeatAni options={options} left={123} delay={2.1} num={7} />
+                                        <RepeatAni options={options} left={218} delay={2.4} num={3} />
+                                        <RepeatAni options={options} left={26} delay={2.1} num={3} />
+                                        <RepeatAni options={options} left={123} delay={2.4} num={4} />
+                                        <RepeatAni options={options} left={218} delay={2.7} num={2} />
+                                        <StopAni options={options} left={26} delay={2.4} num0={endValue[6]} num1={endValue[3]} num2={endValue[0]} />
+                                        <StopAni options={options} left={123} delay={2.7} num0={endValue[7]} num1={endValue[4]} num2={endValue[1]} />
+                                        <StopAni options={options} left={218} delay={3.0} num0={endValue[8]} num1={endValue[5]} num2={endValue[2]} />
                                     </>)}
                                     {isResulting && (<>
                                         {endValue.map((element, index) => (
@@ -791,79 +788,81 @@ export default function Lucky777Game({
                         {/* {isResulting&&!normalWin&&(
                             
                         )} */}
-                        <AnimatePresence>
-                            {activeModal === "help" && (
-                                <motion.div
-                                    key={activeModal}
-                                    initial={{ y: GAME_HEIGHT, opacity: 0 }}
-                                    animate={{ y: 315, opacity: 1 }}
-                                    exit={{ y: GAME_HEIGHT, opacity: 0 }}
-                                    transition={{ duration: 0.4 }}
-                                    className="absolute z-[30] h-[342px] w-[393px]"
-                                >
-                                    <HelpMenu onCloseHelpModal={() => setActiveModal(null)} />
-                                </motion.div>
-                            )}
-                            {activeModal === "recharge" && (
-                                <motion.div
-                                    key={activeModal}
-                                    initial={{ y: GAME_HEIGHT, opacity: 0 }}
-                                    animate={{ y: 443, opacity: 1 }}
-                                    exit={{ y: GAME_HEIGHT, opacity: 0 }}
-                                    transition={{ duration: 0.4 }}
-                                    className="absolute z-[50] h-[146px] w-[393px]"
-                                >
-                                    <RechargeMenu onCloseRechargeModal={() => setActiveModal(null)} />
-                                </motion.div>
-                            )}
-                            {activeModal === "history" && (
-                                <motion.div
-                                    key={activeModal}
-                                    initial={{ y: GAME_HEIGHT, opacity: 0 }}
-                                    animate={{ y: 161, opacity: 1 }}
-                                    exit={{ y: GAME_HEIGHT, opacity: 0 }}
-                                    transition={{ duration: 0.4 }}
-                                    className="absolute z-50 left-[25px] h-[428px] w-[343px]"
-                                >
-                                    <HistoryMenu onCloseHistory={() => setActiveModal(null)} />
-                                </motion.div>
-                            )}
-                            {activeModal === "ranking" && (
-                                <motion.div
-                                    key={activeModal}
-                                    initial={{ y: GAME_HEIGHT, opacity: 0 }}
-                                    animate={{ y: 61, opacity: 1 }}
-                                    exit={{ y: GAME_HEIGHT, opacity: 0 }}
-                                    transition={{ duration: 0.4 }}
-                                    className="absolute z-[30] left-[25px] h-[428px] w-[343px]"
-                                >
-                                    <Ranking onCloseRanking={() => setActiveModal(null)}
-                                        onOpenPrizeDistribution={() => setPrizeModal("prize")} />
-                                </motion.div>
-                            )}
-                            {prizeModal === "prize" && (
-                                <motion.div
-                                    key={prizeModal}
-                                    initial={{ y: GAME_HEIGHT, opacity: 0 }}
-                                    animate={{ y: 80, opacity: 1 }}
-                                    exit={{ y: GAME_HEIGHT, opacity: 0 }}
-                                    transition={{ duration: 0.4 }}
-                                    className="absolute z-[50] left-[25px] h-[428px] w-[343px]"
-                                >
-                                    <PrizeDistribution onClosePrize={() => setPrizeModal(null)} />
-                                </motion.div>
-                            )}
-                            {isOverlayOpen && (
-                                <motion.div
-                                    key="modal-backdrop"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    transition={{ duration: 0.25 }}
-                                    className="absolute inset-0 z-[20] bg-black/60 top-[118px]"
-                                />
-                            )}
-                        </AnimatePresence>
+                        <Suspense fallback={null}>
+                            <AnimatePresence>
+                                {activeModal === "help" && (
+                                    <motion.div
+                                        key={activeModal}
+                                        initial={{ y: GAME_HEIGHT, opacity: 0 }}
+                                        animate={{ y: 315, opacity: 1 }}
+                                        exit={{ y: GAME_HEIGHT, opacity: 0 }}
+                                        transition={{ duration: 0.4 }}
+                                        className="absolute z-[30] h-[342px] w-[393px]"
+                                    >
+                                        <HelpMenu onCloseHelpModal={() => setActiveModal(null)} />
+                                    </motion.div>
+                                )}
+                                {activeModal === "recharge" && (
+                                    <motion.div
+                                        key={activeModal}
+                                        initial={{ y: GAME_HEIGHT, opacity: 0 }}
+                                        animate={{ y: 443, opacity: 1 }}
+                                        exit={{ y: GAME_HEIGHT, opacity: 0 }}
+                                        transition={{ duration: 0.4 }}
+                                        className="absolute z-[50] h-[146px] w-[393px]"
+                                    >
+                                        <RechargeMenu onCloseRechargeModal={() => setActiveModal(null)} />
+                                    </motion.div>
+                                )}
+                                {activeModal === "history" && (
+                                    <motion.div
+                                        key={activeModal}
+                                        initial={{ y: GAME_HEIGHT, opacity: 0 }}
+                                        animate={{ y: 161, opacity: 1 }}
+                                        exit={{ y: GAME_HEIGHT, opacity: 0 }}
+                                        transition={{ duration: 0.4 }}
+                                        className="absolute z-50 left-[25px] h-[428px] w-[343px]"
+                                    >
+                                        <HistoryMenu onCloseHistory={() => setActiveModal(null)} />
+                                    </motion.div>
+                                )}
+                                {activeModal === "ranking" && (
+                                    <motion.div
+                                        key={activeModal}
+                                        initial={{ y: GAME_HEIGHT, opacity: 0 }}
+                                        animate={{ y: 61, opacity: 1 }}
+                                        exit={{ y: GAME_HEIGHT, opacity: 0 }}
+                                        transition={{ duration: 0.4 }}
+                                        className="absolute z-[30] left-[25px] h-[428px] w-[343px]"
+                                    >
+                                        <Ranking onCloseRanking={() => setActiveModal(null)}
+                                            onOpenPrizeDistribution={() => setPrizeModal("prize")} />
+                                    </motion.div>
+                                )}
+                                {prizeModal === "prize" && (
+                                    <motion.div
+                                        key={prizeModal}
+                                        initial={{ y: GAME_HEIGHT, opacity: 0 }}
+                                        animate={{ y: 80, opacity: 1 }}
+                                        exit={{ y: GAME_HEIGHT, opacity: 0 }}
+                                        transition={{ duration: 0.4 }}
+                                        className="absolute z-[50] left-[25px] h-[428px] w-[343px]"
+                                    >
+                                        <PrizeDistribution onClosePrize={() => setPrizeModal(null)} />
+                                    </motion.div>
+                                )}
+                                {isOverlayOpen && (
+                                    <motion.div
+                                        key="modal-backdrop"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{ duration: 0.25 }}
+                                        className="absolute inset-0 z-[20] bg-black/60 top-[118px]"
+                                    />
+                                )}
+                            </AnimatePresence>
+                        </Suspense>
                         {isRolling && (<LightsAni />)}
                         {isResulting && winAmount > 0 && !isWinAniShowed && isOpenWinAni && (
                             <WinAni />
@@ -871,7 +870,7 @@ export default function Lucky777Game({
                         <audio
                             ref={spinSoundRef}
                             src={getMusicUrl(GAME_MUSIC.sound)}
-                            preload="auto"
+                            preload="metadata"
                             playsInline
                         />
                     </div>

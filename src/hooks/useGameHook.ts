@@ -71,6 +71,7 @@ History:null,
 let hasInitialized = false;
 let hasActive = false;
 let initialLoadPromise: Promise<void> | null = null;
+let activeBootstrapPromise: Promise<void> | null = null;
 let activePlayersPromise: Promise<ActivePlayers> | null = null;
 let activePlayersRefreshTimer: ReturnType<typeof setInterval> | null = null;
 type ActivePlayersEvent = {
@@ -195,7 +196,17 @@ export async function bootstrapGameStore(): Promise<GameStore> {
 }
 export async function bootstrapActivePlayers() {
   updateActiveUsers();
-  await fetchActiveData();
+  if (store.ActivePlayers) {
+    return;
+  }
+  if (!activeBootstrapPromise) {
+    activeBootstrapPromise = fetchActiveData()
+      .then(() => undefined)
+      .finally(() => {
+        activeBootstrapPromise = null;
+      });
+  }
+  await activeBootstrapPromise;
 }
 export async function refreshActivePlayers() {
   updateActiveUsers();
@@ -207,17 +218,6 @@ export function useGame() {
     void bootstrapGameStore().catch((error) => {
       console.error("Failed to bootstrap game store", error);
     });
-
-    const listener = (nextState: GameStore) => {
-      setSnapshot({ ...nextState });
-    };
-
-    listeners.add(listener);
-    return () => {
-      listeners.delete(listener);
-    };
-  }, []);
-useEffect(() => {
     void bootstrapActivePlayers().catch((error) => {
       console.error("Failed to bootstrap Active store", error);
     });

@@ -65,7 +65,7 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ isMusicPlaying, unlock
                 ref={audioRef}
                 src={getMusicUrl(GAME_MUSIC.music)}
                 loop
-                preload="auto"
+                preload="none"
                 autoPlay={isMusicPlaying}
                 playsInline
             />
@@ -97,7 +97,7 @@ export const SoundPlayer: React.FC<SoundPlayerProps> = ({
         <audio
             ref={audioRef}
             src={getMusicUrl(GAME_MUSIC.music)}
-            preload="auto"
+            preload="none"
             playsInline
         />
     );

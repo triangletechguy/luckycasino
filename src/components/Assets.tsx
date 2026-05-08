@@ -1,8 +1,9 @@
 import { motion, } from "framer-motion";
 import { Fragment, useState, useEffect } from "react";
-import { useGame, resolveAssetUrl } from "../hooks/useGameHook";
+import { resolveAssetUrl } from "../hooks/useGameHook";
 import { getAssetUrl, GAME_ASSETS } from "../config/gameconfig";
 import React from "react";
+import type { GameDetailsData } from "../api/api";
 
 interface TriangleIconProps extends React.SVGProps<SVGSVGElement> {
     className?: string;
@@ -939,9 +940,14 @@ export function RainMoney() {
         </>
     )
 }
-export function StartAni({ left, delay, num0, num1, num2 }: { left: number; delay: number; num0: number; num1: number; num2: number }) {
+type ReelAniProps = {
+    left: number;
+    delay: number;
+    options: NonNullable<GameDetailsData["options"]>;
+};
+
+export function StartAni({ left, delay, num0, num1, num2, options }: ReelAniProps & { num0: number; num1: number; num2: number }) {
     const rows = [num0, num1, num2]
-    const { options } = useGame()
     return (
         <Fragment key={`light-${left}-${1}`}>
             <div
@@ -950,7 +956,7 @@ export function StartAni({ left, delay, num0, num1, num2 }: { left: number; dela
             >
                 {rows.map((element, index) => (
                     <motion.img
-                        src={resolveAssetUrl(options[element - 13].logo)}
+                        src={resolveAssetUrl(options[element - 13]?.logo ?? "")}
                         className="absolute left-0 top-0 w-[65px] h-[65px]"
                         initial={{ y: 5 + index * 70, opacity: 1 }}
                         animate={{ y: 215, opacity: 1 }}
@@ -972,8 +978,7 @@ export function StartAni({ left, delay, num0, num1, num2 }: { left: number; dela
         </Fragment>
     )
 }
-export function StopAni({ left, delay, num0, num1, num2 }: { left: number; delay: number; num0: number; num1: number; num2: number }) {
-    const { options } = useGame()
+export function StopAni({ left, delay, num0, num1, num2, options }: ReelAniProps & { num0: number; num1: number; num2: number }) {
     const rows = [num0, num1, num2]
     return (
         <Fragment key={`light-${left}-${1}`}>
@@ -983,7 +988,7 @@ export function StopAni({ left, delay, num0, num1, num2 }: { left: number; delay
             >
                 {rows.map((element, index) => (
                     <motion.img
-                        src={resolveAssetUrl(options[element - 13].logo)}
+                        src={resolveAssetUrl(options[element - 13]?.logo ?? "")}
                         className="absolute left-0 top-0 w-[65px] h-[65px]"
                         initial={{ y: -65, opacity: 1 }}
                         animate={{ y: 145 - 70 * index, opacity: 1 }}
@@ -1004,9 +1009,8 @@ export function StopAni({ left, delay, num0, num1, num2 }: { left: number; delay
         </Fragment>
     )
 }
-export function RepeatAni({ left, delay, num }: { left: number; delay: number; num: number }) {
+export function RepeatAni({ left, delay, num, options }: ReelAniProps & { num: number }) {
     const rows = [0, 3, 6, 1]
-    const { options } = useGame()
     // const num = Math.floor(Math.random() * 7);
     return (
         <Fragment key={`light-${left}-${1}`}>
@@ -1016,7 +1020,7 @@ export function RepeatAni({ left, delay, num }: { left: number; delay: number; n
             >
                 {rows.map((element, index) => (
                     <motion.img
-                        src={resolveAssetUrl(options[(num + element) % 7].logo)}
+                        src={resolveAssetUrl(options[(num + element) % 7]?.logo ?? "")}
                         className="absolute left-0 top-0 w-[65px] h-[65px]"
                         initial={{ y: -65, opacity: 1 }}
                         animate={{ y: 215, opacity: 1 }}

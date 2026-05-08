@@ -47,7 +47,7 @@ export default function PrizeDistribution({ onClosePrize }: RankingProps) {
                 ))}
             </div>
             <div className="absolute grid top-[357px] h-[105px] w-[294px] left-1/2 -translate-x-1/2">
-                {prizeDistribution?.policy.map((element, index) => (
+                {prizeDistribution?.policy.map((element) => (
                     <span className="relative text-left  font-sans text-[12px]">{element.policy}</span>
                 ))}
             </div>

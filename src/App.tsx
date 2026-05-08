@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import Lucky777Game from "./components/Lucky777Game"
 import { MusicPlayer } from "./components/GameMusic";
 import LoadingScreen from "./components/LoadingScrean";
-import { GAME_ASSETS, GAME_MUSIC, getAssetUrl, getMusicUrl } from "./config/gameconfig";
+import { GAME_ASSETS, getAssetUrl } from "./config/gameconfig";
 import { bootstrapGameStore, useGame, type GameStore } from "./hooks/useGameHook";
 
 function preloadImage(src: string) {
@@ -19,37 +19,9 @@ function preloadImage(src: string) {
   });
 }
 
-function preloadAudio(src: string) {
-  return new Promise<void>((resolve) => {
-    if (!src) {
-      resolve();
-      return;
-    }
-
-    let settled = false;
-    const settle = () => {
-      if (settled) {
-        return;
-      }
-
-      settled = true;
-      window.clearTimeout(timeoutId);
-      resolve();
-    };
-
-    const audio = new Audio();
-    const timeoutId = window.setTimeout(settle, 3000);
-    audio.preload = "auto";
-    audio.src = src;
-    audio.onloadeddata = audio.oncanplaythrough = audio.onerror = settle;
-    audio.load();
-  });
-}
-
 function getGameDetailsAssetUrls(gameDetails: GameStore["gameDetails"]) {
   return [
     ...(gameDetails?.options ?? []).map((option) => option.logo),
-    ...(gameDetails?.bet_amounts ?? []).map((betAmount) => betAmount.icon),
   ].map((path) => getAssetUrl(path));
 }
 
@@ -84,33 +56,6 @@ async function preloadImageGroup(
   );
 }
 
-async function preloadAudioGroup(
-  assets: string[],
-  progressFrom: number,
-  progressTo: number,
-  setProgress: (value: number) => void,
-) {
-  const uniqueAssets = getUniqueUrls(assets);
-
-  if (uniqueAssets.length === 0) {
-    setProgress(progressTo);
-    return;
-  }
-
-  let loaded = 0;
-
-  await Promise.all(
-    uniqueAssets.map((src) =>
-      preloadAudio(src).then(() => {
-        loaded += 1;
-        setProgress(
-          progressFrom + Math.round((loaded / uniqueAssets.length) * (progressTo - progressFrom)),
-        );
-      }),
-    ),
-  );
-}
-
 async function preloadGameAssets(setProgress: (value: number) => void) {
   const logoSrc = getAssetUrl(GAME_ASSETS.loadingLogo);
   await preloadImage(logoSrc);
@@ -119,21 +64,22 @@ async function preloadGameAssets(setProgress: (value: number) => void) {
   const gameStore = await bootstrapGameStore();
   setProgress(35);
 
-  const staticAssets = Object.values(GAME_ASSETS)
-    .filter((fileName) => fileName !== GAME_ASSETS.loadingLogo)
-    .map((fileName) => getAssetUrl(fileName));
+  const staticAssets = [
+    GAME_ASSETS.bg,
+    GAME_ASSETS.gameBoard,
+    GAME_ASSETS.rotated,
+    GAME_ASSETS.cup,
+    GAME_ASSETS.diamond,
+    GAME_ASSETS.minusBtn,
+    GAME_ASSETS.plusBtn,
+    GAME_ASSETS.autoBtn,
+    GAME_ASSETS.spinBtn,
+  ].map((fileName) => getAssetUrl(fileName));
   const gameDetailsAssets = getGameDetailsAssetUrls(gameStore.gameDetails);
 
   await preloadImageGroup(
     [...staticAssets, ...gameDetailsAssets],
     35,
-    92,
-    setProgress,
-  );
-
-  await preloadAudioGroup(
-    Object.values(GAME_MUSIC).map((fileName) => getMusicUrl(fileName)),
-    92,
     100,
     setProgress,
   );
