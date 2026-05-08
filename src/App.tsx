@@ -3,45 +3,139 @@ import { useCallback, useEffect, useState } from "react";
 import Lucky777Game from "./components/Lucky777Game"
 import { MusicPlayer } from "./components/GameMusic";
 import LoadingScreen from "./components/LoadingScrean";
-import { GAME_ASSETS, getAssetUrl } from "./config/gameconfig";
-// import { useGame, bootstrapGameStore } from "./hooks/useGameHook";
-import { useGame, } from "./hooks/useGameHook";
+import { GAME_ASSETS, GAME_MUSIC, getAssetUrl, getMusicUrl } from "./config/gameconfig";
+import { bootstrapGameStore, useGame, type GameStore } from "./hooks/useGameHook";
 
 function preloadImage(src: string) {
   return new Promise<void>((resolve) => {
+    if (!src) {
+      resolve();
+      return;
+    }
+
     const img = new Image();
     img.src = src;
     img.onload = img.onerror = () => resolve();
   });
 }
 
-async function preloadGameAssets(setProgress: (value: number) => void) {
-  const logoSrc = getAssetUrl(GAME_ASSETS.loadingLogo);
-  await preloadImage(logoSrc);
-  setProgress(20);
+function preloadAudio(src: string) {
+  return new Promise<void>((resolve) => {
+    if (!src) {
+      resolve();
+      return;
+    }
 
-  const assets = Object.values(GAME_ASSETS)
-    .filter((fileName) => fileName !== GAME_ASSETS.loadingLogo)
-    .map((fileName) => getAssetUrl(fileName));
+    let settled = false;
+    const settle = () => {
+      if (settled) {
+        return;
+      }
 
-  if (assets.length === 0) {
-    setProgress(100);
+      settled = true;
+      window.clearTimeout(timeoutId);
+      resolve();
+    };
+
+    const audio = new Audio();
+    const timeoutId = window.setTimeout(settle, 3000);
+    audio.preload = "auto";
+    audio.src = src;
+    audio.onloadeddata = audio.oncanplaythrough = audio.onerror = settle;
+    audio.load();
+  });
+}
+
+function getGameDetailsAssetUrls(gameDetails: GameStore["gameDetails"]) {
+  return [
+    ...(gameDetails?.options ?? []).map((option) => option.logo),
+    ...(gameDetails?.bet_amounts ?? []).map((betAmount) => betAmount.icon),
+  ].map((path) => getAssetUrl(path));
+}
+
+function getUniqueUrls(urls: string[]) {
+  return Array.from(new Set(urls.filter(Boolean)));
+}
+
+async function preloadImageGroup(
+  assets: string[],
+  progressFrom: number,
+  progressTo: number,
+  setProgress: (value: number) => void,
+) {
+  const uniqueAssets = getUniqueUrls(assets);
+
+  if (uniqueAssets.length === 0) {
+    setProgress(progressTo);
     return;
   }
 
   let loaded = 0;
 
   await Promise.all(
-    assets.map(
-      (src) =>
-        new Promise<void>((resolve) => {
-          preloadImage(src).then(() => {
-            loaded += 1;
-            setProgress(20 + Math.round((loaded / assets.length) * 80));
-            resolve();
-          });
-        }),
+    uniqueAssets.map((src) =>
+      preloadImage(src).then(() => {
+        loaded += 1;
+        setProgress(
+          progressFrom + Math.round((loaded / uniqueAssets.length) * (progressTo - progressFrom)),
+        );
+      }),
     ),
+  );
+}
+
+async function preloadAudioGroup(
+  assets: string[],
+  progressFrom: number,
+  progressTo: number,
+  setProgress: (value: number) => void,
+) {
+  const uniqueAssets = getUniqueUrls(assets);
+
+  if (uniqueAssets.length === 0) {
+    setProgress(progressTo);
+    return;
+  }
+
+  let loaded = 0;
+
+  await Promise.all(
+    uniqueAssets.map((src) =>
+      preloadAudio(src).then(() => {
+        loaded += 1;
+        setProgress(
+          progressFrom + Math.round((loaded / uniqueAssets.length) * (progressTo - progressFrom)),
+        );
+      }),
+    ),
+  );
+}
+
+async function preloadGameAssets(setProgress: (value: number) => void) {
+  const logoSrc = getAssetUrl(GAME_ASSETS.loadingLogo);
+  await preloadImage(logoSrc);
+  setProgress(10);
+
+  const gameStore = await bootstrapGameStore();
+  setProgress(35);
+
+  const staticAssets = Object.values(GAME_ASSETS)
+    .filter((fileName) => fileName !== GAME_ASSETS.loadingLogo)
+    .map((fileName) => getAssetUrl(fileName));
+  const gameDetailsAssets = getGameDetailsAssetUrls(gameStore.gameDetails);
+
+  await preloadImageGroup(
+    [...staticAssets, ...gameDetailsAssets],
+    35,
+    92,
+    setProgress,
+  );
+
+  await preloadAudioGroup(
+    Object.values(GAME_MUSIC).map((fileName) => getMusicUrl(fileName)),
+    92,
+    100,
+    setProgress,
   );
 }
 
@@ -130,8 +224,6 @@ function App() {
         if (cancelled) {
           return;
         }
-
-        setProgress(85);
 
 
         // const [res] = await Promise.all([

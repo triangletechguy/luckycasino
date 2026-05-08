@@ -35,7 +35,7 @@ import {
 export function resolveAssetUrl(path: string): string {
   return getAssetUrl(path);
 }
-type GameStore = {
+export type GameStore = {
   gameDetails: GameDetailsData | null;
   ranking:RankingResponse|null ;
   jackpot:string;
@@ -183,7 +183,7 @@ if (hasActive) return;
   });
   startActivePlayersFallbackRefresh();
 }
-export async function bootstrapGameStore() {
+export async function bootstrapGameStore(): Promise<GameStore> {
   initializeStore();
   if (!initialLoadPromise) {
     initialLoadPromise = runRefreshGameData().finally(() => {
@@ -191,6 +191,7 @@ export async function bootstrapGameStore() {
     });
   }
   await initialLoadPromise;
+  return store;
 }
 export async function bootstrapActivePlayers() {
   updateActiveUsers();
