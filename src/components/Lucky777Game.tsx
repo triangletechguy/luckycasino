@@ -206,13 +206,15 @@ export default function Lucky777Game({
                 setStatusArray([0, 0, 0, 0, 0, 0, 0, 0, 0]);
                 setShowWinAmount(0)
                 setForCoinBoard(Number(playerInfo?.balance) - Number.parseFloat(betAmounts[currentBet]?.amount))
-                handlePlayerInfo()
                 setIsWinAniShowed(false)
                 setIsFirst(false)
                 setResultPending(false)
                 setIsResulting(false)
                 setIsPending(false);
                 setIsRolling(true);
+            }
+            if (second === 500) {
+                handlePlayerInfo()
             }
             if (second === 2900) {
                 setStatusArray((prev) => {
