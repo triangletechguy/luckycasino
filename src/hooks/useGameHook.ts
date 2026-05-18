@@ -27,7 +27,6 @@ import {
 import {
   ACTIVE_CHANNEL,
   ACTIVE_EVENT,
-  FALLBACK_REFRESH_MS,
   REALTIME_CHANNEL,
   REALTIME_EVENT,
   getAssetUrl,
@@ -73,7 +72,7 @@ let hasActive = false;
 let initialLoadPromise: Promise<void> | null = null;
 let activeBootstrapPromise: Promise<void> | null = null;
 let activePlayersPromise: Promise<ActivePlayers> | null = null;
-let activePlayersRefreshTimer: ReturnType<typeof setInterval> | null = null;
+
 type ActivePlayersEvent = {
   data?: ACtivePlayersData[];
   players?: ACtivePlayersData[];
@@ -97,8 +96,8 @@ function updateStore(
 
 async function runRefreshGameData() {
   updateStore({ isLoading: true, isMusicSettingLoading: true });
-  try {
-    const [gameDetail,ranking,jackpot,player,url,prizeDistribution,isMusicEnabled, winToday,history] = await Promise.all([
+  const [gameDetail, ranking, jackpot, player, url, prizeDistribution, isMusicEnabled, winToday, history] =
+    await Promise.allSettled([
       fetchGameDetail(),
       fetchRanking(),
       fetchJackpot(),
@@ -109,23 +108,49 @@ async function runRefreshGameData() {
       fetchWinToday(),
       fetchHistory(),
     ]);
-  updateStore({
-    gameDetails: gameDetail,
-    ranking: ranking,
-    jackpot: jackpot.amount,
-  playerInfo: player,
-  url: url,
-  isMusicSettingLoading: false,
-  prizeDistribution:prizeDistribution,
-  isMusicEnabled,
-  isLoading: false,
-  winToday:winToday,
-  History:history,
-});
-  } catch (error) {
-    updateStore({ isLoading: false, isMusicSettingLoading: false,});
-    throw error;
+
+  const failedRequests: string[] = [];
+
+  const nextState: Partial<GameStore> = {
+    isMusicSettingLoading: false,
+    isLoading: false,
+  };
+
+  if (gameDetail.status === "fulfilled") nextState.gameDetails = gameDetail.value;
+  else failedRequests.push("game details");
+
+  if (ranking.status === "fulfilled") nextState.ranking = ranking.value;
+  else failedRequests.push("ranking");
+
+  if (jackpot.status === "fulfilled") nextState.jackpot = jackpot.value.amount;
+  else failedRequests.push("jackpot");
+
+  if (player.status === "fulfilled") nextState.playerInfo = player.value;
+  else failedRequests.push("player");
+
+  if (url.status === "fulfilled") nextState.url = url.value;
+  else failedRequests.push("recharge url");
+
+  if (prizeDistribution.status === "fulfilled") nextState.prizeDistribution = prizeDistribution.value;
+  else failedRequests.push("prize distribution");
+
+  if (isMusicEnabled.status === "fulfilled") nextState.isMusicEnabled = isMusicEnabled.value;
+  else failedRequests.push("music setting");
+
+  if (winToday.status === "fulfilled") nextState.winToday = winToday.value;
+  else failedRequests.push("win today");
+
+  if (history.status === "fulfilled") nextState.History = history.value;
+  else failedRequests.push("history");
+
+  if (failedRequests.length > 0) {
+    console.warn(
+      "Some game bootstrap requests failed. Continuing with partial data:",
+      failedRequests.join(", "),
+    );
   }
+
+  updateStore(nextState);
 }
 async function fetchActiveData(){
   if (!activePlayersPromise) {
@@ -178,11 +203,11 @@ if (hasActive) return;
       updateActiveDataFromSocket(event);
       return;
     }
-    void fetchActiveData().catch((error) => {
-      console.error("Failed to refresh active players from socket", error);
-    });
+    console.warn(
+      "Active players socket event received without players/data payload. Skipping API refresh.",
+    );
   });
-  startActivePlayersFallbackRefresh();
+
 }
 export async function bootstrapGameStore(): Promise<GameStore> {
   initializeStore();
@@ -210,8 +235,16 @@ export async function bootstrapActivePlayers() {
 }
 export async function refreshActivePlayers() {
   updateActiveUsers();
-  return fetchActiveData();
+
+  if (store.ActivePlayers) {
+    return store.ActivePlayers;
+  }
+
+  await bootstrapActivePlayers();
+
+  return store.ActivePlayers;
 }
+
 export function useGame() {
   const [snapshot, setSnapshot] = useState({ ...store });
   useEffect(() => {
@@ -262,9 +295,7 @@ const handleWinToday= useCallback(async () => {
     //   // throw new Error("Insufficient balance");
     // }
     const response: betPlace = await betPlace(amount, );
-    void refreshActivePlayers().catch((error) => {
-      console.error("Failed to refresh active players after bet", error);
-    });
+    
     return response;
   }, []);
 

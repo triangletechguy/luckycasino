@@ -6,6 +6,24 @@ import { checkIntroIntegration } from "./api/auth.ts"
 import { closeCurrentView } from "./utils/closeCurrentView.ts"
 
 async function bootstrap() {
+  // During development, skip the intro integration check so the dev server
+  // doesn't immediately close the browser window when no integration
+  // query parameters are present.
+  if (import.meta.env.DEV) {
+    const existingUserId = Number(localStorage.getItem("user_id") || 0);
+    if (!Number.isFinite(existingUserId) || existingUserId <= 0) {
+      const fallbackUserId = Number(import.meta.env.VITE_DEV_USER_ID || 1);
+      localStorage.setItem("user_id", String(fallbackUserId > 0 ? fallbackUserId : 1));
+    }
+
+    createRoot(document.getElementById("root")!).render(
+      <StrictMode>
+        <App />
+      </StrictMode>
+    );
+    return;
+  }
+
   const search = window.location.search.replace(/\?/g, "&").replace(/^&/, "?");
   const params = new URLSearchParams(search);
 

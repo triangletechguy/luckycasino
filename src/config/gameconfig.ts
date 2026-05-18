@@ -46,7 +46,7 @@ export const USE_TLS = REALTIME_SCHEME === "https";
 export const REALTIME_PORT = Number(
   import.meta.env.VITE_REVERB_PORT || 8080,
 );
-export const FALLBACK_REFRESH_MS = 5_000;
+// export const FALLBACK_REFRESH_MS = 5_000;
 
 export const ASSET_BASE_URL = `${BACKEND_ORIGIN}/core/storage/app/public/`;
 
