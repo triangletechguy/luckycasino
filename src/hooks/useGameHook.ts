@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { echo,  } from "./echo";
+import { echo } from "./echo";
 import {
   fetchWinToday,
   fetchGameDetail,
@@ -72,6 +72,8 @@ let hasActive = false;
 let initialLoadPromise: Promise<void> | null = null;
 let activeBootstrapPromise: Promise<void> | null = null;
 let activePlayersPromise: Promise<ActivePlayers> | null = null;
+const FALLBACK_REFRESH_MS = 15_000;
+let activePlayersRefreshTimer: ReturnType<typeof setInterval> | null = null;
 
 type ActivePlayersEvent = {
   data?: ACtivePlayersData[];
@@ -198,6 +200,7 @@ if (hasActive) return;
  hasActive = true;
  const channel = echo.channel(ACTIVE_CHANNEL);
  const eventName = `.${ACTIVE_EVENT}`;
+  startActivePlayersFallbackRefresh();
   channel.listen(eventName, (event: ActivePlayersEvent) => {
     if (event.players || event.data) {
       updateActiveDataFromSocket(event);
