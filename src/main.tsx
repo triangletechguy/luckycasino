@@ -324,6 +324,68 @@ function getDevFallbackUserId(): number {
   return 1;
 }
 
+function getStoredUserId(): number | null {
+  const storedUserId = Number(localStorage.getItem("user_id"));
+
+  if (Number.isFinite(storedUserId) && storedUserId > 0) {
+    return storedUserId;
+  }
+
+  return null;
+}
+
+function isTruthyEnvValue(value: unknown): boolean {
+  if (typeof value !== "string") {
+    return false;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes";
+}
+
+function tryBootstrapWithoutLaunchParams(source: string): boolean {
+  const storedUserId = getStoredUserId();
+
+  if (storedUserId !== null) {
+    localStorage.setItem("user_id", storedUserId.toString());
+
+    console.warn(
+      `Missing launch params. Using existing localStorage user_id=${storedUserId}. Source: ${source}`,
+    );
+
+    renderApp();
+    return true;
+  }
+
+  const allowProdFallback =
+    import.meta.env.PROD &&
+    isTruthyEnvValue(import.meta.env.VITE_ALLOW_PROD_FALLBACK);
+
+  const configuredProdFallbackUserId = Number(
+    import.meta.env.VITE_PROD_FALLBACK_USER_ID,
+  );
+
+  if (
+    allowProdFallback &&
+    Number.isFinite(configuredProdFallbackUserId) &&
+    configuredProdFallbackUserId > 0
+  ) {
+    localStorage.setItem(
+      "user_id",
+      configuredProdFallbackUserId.toString(),
+    );
+
+    console.warn(
+      `Missing launch params in production. Using VITE_PROD_FALLBACK_USER_ID=${configuredProdFallbackUserId}. Source: ${source}`,
+    );
+
+    renderApp();
+    return true;
+  }
+
+  return false;
+}
+
 async function bootstrap(): Promise<void> {
   const { userIdParam, tokenParam, source } = getGameLaunchParams();
   const userId = Number(userIdParam);
@@ -344,6 +406,10 @@ async function bootstrap(): Promise<void> {
       );
 
       renderApp();
+      return;
+    }
+
+    if (tryBootstrapWithoutLaunchParams(source)) {
       return;
     }
 
