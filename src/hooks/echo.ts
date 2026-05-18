@@ -41,8 +41,8 @@ const noopEcho: EchoLike = {
   channel: () => noopChannel,
 };
 
-export const echo: EchoLike = REALTIME_ENABLED
-  ? (new Echo({
+const realtimeEcho = REALTIME_ENABLED
+  ? new Echo({
       broadcaster: "reverb",
       key: REVERB_KEY,
 
@@ -58,5 +58,11 @@ export const echo: EchoLike = REALTIME_ENABLED
       disableStats: true,
       cluster: "",
       namespace: false,
-    }) as unknown as EchoLike)
+    })
+  : null;
+
+export const echo: EchoLike = realtimeEcho
+  ? {
+      channel: (name: string) => realtimeEcho.channel(name),
+    }
   : noopEcho;

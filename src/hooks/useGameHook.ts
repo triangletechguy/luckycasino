@@ -185,6 +185,11 @@ function startActivePlayersFallbackRefresh() {
     });
   }, FALLBACK_REFRESH_MS);
 }
+function stopActivePlayersFallbackRefresh() {
+  if (!activePlayersRefreshTimer) return;
+  clearInterval(activePlayersRefreshTimer);
+  activePlayersRefreshTimer = null;
+}
 function initializeStore() {
   if (hasInitialized) return;
   hasInitialized = true;
@@ -195,12 +200,12 @@ function initializeStore() {
   });
 }
 
-function updateActiveUsers(){
-if (hasActive) return;
- hasActive = true;
- const channel = echo.channel(ACTIVE_CHANNEL);
- const eventName = `.${ACTIVE_EVENT}`;
+function updateActiveUsers() {
   startActivePlayersFallbackRefresh();
+  if (hasActive) return;
+  hasActive = true;
+  const channel = echo.channel(ACTIVE_CHANNEL);
+  const eventName = `.${ACTIVE_EVENT}`;
   channel.listen(eventName, (event: ActivePlayersEvent) => {
     if (event.players || event.data) {
       updateActiveDataFromSocket(event);
@@ -210,7 +215,6 @@ if (hasActive) return;
       "Active players socket event received without players/data payload. Skipping API refresh.",
     );
   });
-
 }
 export async function bootstrapGameStore(): Promise<GameStore> {
   initializeStore();
@@ -265,6 +269,9 @@ export function useGame() {
     listeners.add(listener);
     return () => {
       listeners.delete(listener);
+      if (listeners.size === 0) {
+        stopActivePlayersFallbackRefresh();
+      }
     };
   }, []);
 const handlePrizeDistribution= useCallback(async () => {

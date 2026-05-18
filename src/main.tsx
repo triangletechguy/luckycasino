@@ -3,7 +3,10 @@ import { createRoot } from "react-dom/client";
 import axios from "axios";
 import "./index.css";
 import App from "./App.tsx";
-import { checkIntroIntegration, type IntroResponse } from "./api/auth.ts";
+import {
+  checkIntroIntegration,
+  type IntroResponse,
+} from "./api/auth.ts";
 import { closeCurrentView } from "./utils/closeCurrentView.ts";
 
 type NativeWindow = Window & {
@@ -18,6 +21,27 @@ type NativeWindow = Window & {
     };
   };
 };
+
+type ParamSource = {
+  label: string;
+  value: string;
+};
+
+const USER_ID_PARAM_KEYS = ["userid", "user_id", "userId", "uid"] as const;
+const TOKEN_PARAM_KEYS = [
+  "token",
+  "auth_token",
+  "authToken",
+  "access_token",
+] as const;
+
+const rootElement = document.getElementById("root");
+
+if (!rootElement) {
+  throw new Error("Root element #root not found.");
+}
+
+const root = createRoot(rootElement);
 
 function isNativeView(): boolean {
   const nativeWindow = window as NativeWindow;
@@ -49,15 +73,176 @@ function isSuccessStatus(status: IntroResponse["status"]): boolean {
   );
 }
 
-function renderBootstrapError(title: string, details: string): void {
-  const rootElement = document.getElementById("root");
+function tryDecodeURIComponent(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
 
-  if (!rootElement) {
-    console.error(title, details);
+function parseParamsFromCandidate(candidate: string): URLSearchParams | null {
+  const trimmed = candidate.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  try {
+    const url = new URL(trimmed);
+
+    if (url.search) {
+      return new URLSearchParams(url.search);
+    }
+
+    const hashQueryIndex = url.hash.indexOf("?");
+
+    if (hashQueryIndex >= 0) {
+      return new URLSearchParams(url.hash.slice(hashQueryIndex + 1));
+    }
+  } catch {
+    // Continue with query-like parsing below.
+  }
+
+  const normalizedQuery = trimmed
+    .replace(/^[?#]/, "")
+    .replace(/\?/g, "&")
+    .replace(/^&/, "");
+
+  if (!normalizedQuery || !normalizedQuery.includes("=")) {
+    return null;
+  }
+
+  return new URLSearchParams(normalizedQuery);
+}
+
+function enqueueParamSource(
+  queue: ParamSource[],
+  seen: Set<string>,
+  label: string,
+  value: string,
+): void {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
     return;
   }
 
-  createRoot(rootElement).render(
+  const key = `${label}:${trimmedValue}`;
+
+  if (seen.has(key)) {
+    return;
+  }
+
+  seen.add(key);
+  queue.push({ label, value: trimmedValue });
+}
+
+function getParamByAliases(
+  params: URLSearchParams,
+  aliases: readonly string[],
+): string | null {
+  const aliasSet = new Set(aliases.map((alias) => alias.toLowerCase()));
+
+  for (const [key, value] of params.entries()) {
+    if (aliasSet.has(key.toLowerCase()) && value.trim() !== "") {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+function getGameLaunchParams(): {
+  userIdParam: string | null;
+  tokenParam: string | null;
+  source: string;
+} {
+  const queue: ParamSource[] = [];
+  const seen = new Set<string>();
+
+  enqueueParamSource(
+    queue,
+    seen,
+    "window.location.search",
+    window.location.search,
+  );
+  enqueueParamSource(
+    queue,
+    seen,
+    "window.location.hash",
+    window.location.hash,
+  );
+  enqueueParamSource(
+    queue,
+    seen,
+    "window.location.href",
+    window.location.href,
+  );
+
+  let lastUserId: string | null = null;
+  let lastToken: string | null = null;
+  let lastSource = "unknown";
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+
+    if (!current) {
+      break;
+    }
+
+    const params = parseParamsFromCandidate(current.value);
+
+    if (!params) {
+      continue;
+    }
+
+    const userIdParam = getParamByAliases(params, USER_ID_PARAM_KEYS);
+    const tokenParam = getParamByAliases(params, TOKEN_PARAM_KEYS);
+
+    if (userIdParam !== null) {
+      lastUserId = userIdParam;
+      lastSource = current.label;
+    }
+
+    if (tokenParam !== null) {
+      lastToken = tokenParam;
+      lastSource = current.label;
+    }
+
+    if (userIdParam !== null && tokenParam !== null) {
+      return {
+        userIdParam,
+        tokenParam,
+        source: current.label,
+      };
+    }
+
+    for (const value of params.values()) {
+      enqueueParamSource(queue, seen, `${current.label} -> nested`, value);
+
+      const decodedValue = tryDecodeURIComponent(value);
+
+      if (decodedValue !== value) {
+        enqueueParamSource(
+          queue,
+          seen,
+          `${current.label} -> decoded`,
+          decodedValue,
+        );
+      }
+    }
+  }
+
+  return {
+    userIdParam: lastUserId,
+    tokenParam: lastToken,
+    source: lastSource,
+  };
+}
+
+function renderBootstrapError(title: string, details: string): void {
+  root.render(
     <div
       style={{
         minHeight: "100vh",
@@ -115,14 +300,32 @@ function formatError(error: unknown): string {
   return String(error);
 }
 
-async function bootstrap() {
-  localStorage.removeItem("user_id");
+function renderApp(): void {
+  root.render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}
 
-  const search = window.location.search.replace(/\?/g, "&").replace(/^&/, "?");
-  const params = new URLSearchParams(search);
+function getDevFallbackUserId(): number {
+  const existingUserId = Number(localStorage.getItem("user_id"));
 
-  const userIdParam = params.get("userid");
-  const tokenParam = params.get("token");
+  if (Number.isFinite(existingUserId) && existingUserId > 0) {
+    return existingUserId;
+  }
+
+  const configuredUserId = Number(import.meta.env.VITE_DEV_USER_ID);
+
+  if (Number.isFinite(configuredUserId) && configuredUserId > 0) {
+    return configuredUserId;
+  }
+
+  return 1;
+}
+
+async function bootstrap(): Promise<void> {
+  const { userIdParam, tokenParam, source } = getGameLaunchParams();
   const userId = Number(userIdParam);
 
   if (
@@ -132,11 +335,30 @@ async function bootstrap() {
     !Number.isFinite(userId) ||
     userId <= 0
   ) {
+    if (import.meta.env.DEV) {
+      const fallbackUserId = getDevFallbackUserId();
+      localStorage.setItem("user_id", fallbackUserId.toString());
+
+      console.warn(
+        "Missing userid/token in development mode. Skipping intro integration check.",
+      );
+
+      renderApp();
+      return;
+    }
+
     const message = [
       "Missing or invalid URL params.",
       "",
       "Required URL format:",
       "?userid=2&token=123456",
+      "",
+      "Also accepted:",
+      "?user_id=2&token=123456",
+      "#/game?userid=2&token=123456",
+      "",
+      `Current URL: ${window.location.href}`,
+      `Detected source: ${source}`,
       "",
       `Received userid: ${String(userIdParam)}`,
       `Received token: ${maskToken(tokenParam)}`,
@@ -154,6 +376,8 @@ async function bootstrap() {
   }
 
   try {
+    localStorage.removeItem("user_id");
+
     const res = await checkIntroIntegration(userId, tokenParam);
     const responseUserId = Number(res.user_id);
 
@@ -184,18 +408,7 @@ async function bootstrap() {
     }
 
     localStorage.setItem("user_id", responseUserId.toString());
-
-    const rootElement = document.getElementById("root");
-
-    if (!rootElement) {
-      throw new Error("Root element #root not found.");
-    }
-
-    createRoot(rootElement).render(
-      <StrictMode>
-        <App />
-      </StrictMode>,
-    );
+    renderApp();
   } catch (error) {
     const message = [
       "Intro API request failed.",
