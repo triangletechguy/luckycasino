@@ -343,6 +343,66 @@ function isTruthyEnvValue(value: unknown): boolean {
   return normalized === "1" || normalized === "true" || normalized === "yes";
 }
 
+function isFalsyEnvValue(value: unknown): boolean {
+  if (typeof value !== "string") {
+    return false;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return normalized === "0" || normalized === "false" || normalized === "no";
+}
+
+function isVercelDeploymentHost(): boolean {
+  return window.location.hostname.endsWith(".vercel.app");
+}
+
+function shouldAllowProductionFallback(): boolean {
+  if (!import.meta.env.PROD) {
+    return false;
+  }
+
+  const fallbackFlag = import.meta.env.VITE_ALLOW_PROD_FALLBACK;
+
+  if (isTruthyEnvValue(fallbackFlag)) {
+    return true;
+  }
+
+  if (isFalsyEnvValue(fallbackFlag)) {
+    return false;
+  }
+
+  // Helpful default for Vercel preview URLs opened directly in browser.
+  return isVercelDeploymentHost();
+}
+
+function getProductionFallbackUserId(): number | null {
+  const configuredProdFallbackUserId = Number(
+    import.meta.env.VITE_PROD_FALLBACK_USER_ID,
+  );
+
+  if (
+    Number.isFinite(configuredProdFallbackUserId) &&
+    configuredProdFallbackUserId > 0
+  ) {
+    return configuredProdFallbackUserId;
+  }
+
+  const configuredDevFallbackUserId = Number(import.meta.env.VITE_DEV_USER_ID);
+
+  if (
+    Number.isFinite(configuredDevFallbackUserId) &&
+    configuredDevFallbackUserId > 0
+  ) {
+    return configuredDevFallbackUserId;
+  }
+
+  if (isVercelDeploymentHost()) {
+    return 1;
+  }
+
+  return null;
+}
+
 function tryBootstrapWithoutLaunchParams(source: string): boolean {
   const storedUserId = getStoredUserId();
 
@@ -357,18 +417,12 @@ function tryBootstrapWithoutLaunchParams(source: string): boolean {
     return true;
   }
 
-  const allowProdFallback =
-    import.meta.env.PROD &&
-    isTruthyEnvValue(import.meta.env.VITE_ALLOW_PROD_FALLBACK);
-
-  const configuredProdFallbackUserId = Number(
-    import.meta.env.VITE_PROD_FALLBACK_USER_ID,
-  );
+  const allowProdFallback = shouldAllowProductionFallback();
+  const configuredProdFallbackUserId = getProductionFallbackUserId();
 
   if (
     allowProdFallback &&
-    Number.isFinite(configuredProdFallbackUserId) &&
-    configuredProdFallbackUserId > 0
+    configuredProdFallbackUserId !== null
   ) {
     localStorage.setItem(
       "user_id",
@@ -425,6 +479,7 @@ async function bootstrap(): Promise<void> {
       "",
       `Current URL: ${window.location.href}`,
       `Detected source: ${source}`,
+      "Hint: set VITE_ALLOW_PROD_FALLBACK=true and VITE_PROD_FALLBACK_USER_ID=1 on Vercel if needed.",
       "",
       `Received userid: ${String(userIdParam)}`,
       `Received token: ${maskToken(tokenParam)}`,
