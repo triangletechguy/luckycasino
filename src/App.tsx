@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import Lucky777Game from "./components/Lucky777Game"
 import { MusicPlayer } from "./components/GameMusic";
 import LoadingScreen from "./components/LoadingScrean";
-import { GAME_ASSETS, getAssetUrl } from "./config/gameconfig";
+import { GAME_ASSETS, GAME_MUSIC, getAssetUrl } from "./config/gameconfig";
 import { bootstrapGameStore, useGame, type GameStore } from "./hooks/useGameHook";
 
 function preloadImage(src: string) {
@@ -101,15 +101,22 @@ function App() {
     isMusicSettingLoading,
     setMusicEnabled,
   } = useGame();
+  const hasBackgroundMusicTrack =
+    GAME_MUSIC.music.trim() !== "" &&
+    GAME_MUSIC.music.trim().toLowerCase() !== GAME_MUSIC.sound.trim().toLowerCase();
   const shouldRequestAudioUnlock =
     !isMusicSettingLoading &&
     isMusicEnabled &&
     !hasAudioGesture;
 
   const handleUnlockAudio = useCallback(() => {
+    if (hasAudioGesture) {
+      return;
+    }
+
     setHasAudioGesture(true);
     setAudioUnlockVersion((current) => current + 1);
-  }, []);
+  }, [hasAudioGesture]);
 
   // const isRoundStartable = useCallback((remainingSeconds: number | undefined) => {
   //   if (remainingSeconds === undefined) {
@@ -217,7 +224,12 @@ function App() {
   return (
     <div className="relative flex min-h-[100dvh] w-full items-end justify-center overflow-hidden">
       <MusicPlayer
-        isMusicPlaying={!isMusicSettingLoading && isMusicEnabled}
+        isMusicPlaying={
+          !isMusicSettingLoading &&
+          isMusicEnabled &&
+          hasAudioGesture &&
+          hasBackgroundMusicTrack
+        }
         unlockVersion={audioUnlockVersion}
       />
       {isBootLoading ? (
@@ -229,6 +241,7 @@ function App() {
       ) : (
         <div
           className="contents"
+          onPointerDown={handleUnlockAudio}
           onClick={shouldRequestAudioUnlock ? handleUnlockAudio : undefined}
           onTouchStart={shouldRequestAudioUnlock ? handleUnlockAudio : undefined}
         >

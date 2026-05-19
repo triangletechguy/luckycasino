@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { getMusicUrl, GAME_MUSIC } from "../config/gameconfig";
+import { getMusicUrlWithFallback, GAME_MUSIC } from "../config/gameconfig";
 
 type MusicPlayerProps = {
     isMusicPlaying: boolean;
@@ -63,10 +63,9 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ isMusicPlaying, unlock
         <>
             <audio
                 ref={audioRef}
-                src={getMusicUrl(GAME_MUSIC.music)}
+                src={getMusicUrlWithFallback(GAME_MUSIC.music)}
                 loop
                 preload="none"
-                autoPlay={isMusicPlaying}
                 playsInline
             />
         </>
@@ -96,7 +95,7 @@ export const SoundPlayer: React.FC<SoundPlayerProps> = ({
     return (
         <audio
             ref={audioRef}
-            src={getMusicUrl(GAME_MUSIC.music)}
+            src={getMusicUrlWithFallback(GAME_MUSIC.music)}
             preload="none"
             playsInline
         />

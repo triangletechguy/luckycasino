@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, } from "framer-motion";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { GAME_ASSETS, GAME_MUSIC, getAssetUrl, getMusicUrl } from "../config/gameconfig";
+import { GAME_ASSETS, GAME_MUSIC, getAssetUrl, getMusicUrlWithFallback } from "../config/gameconfig";
 import { type ActivePlayers } from "../api/api"
 import MenuCoin from "./MenuCoin";
 import MenuTop from "./MenuTop";
@@ -108,7 +108,6 @@ export default function Lucky777Game({
     const isOverlayOpen = (activeModal !== null || prizeModal !== null || winModal === true);
     const { gameScale, viewportHeight, viewportOffsetTop } = useResponsiveGameViewport();
     const spinSoundRef = useRef<HTMLAudioElement>(null);
-    const skipNextSpinStartSoundRef = useRef(false);
     const playSpinSound = () => {
         if (!isMusicPlaying)
             return
@@ -176,11 +175,6 @@ export default function Lucky777Game({
             return
         const timer = setInterval(() => {
             if (second === 0) {
-                if (skipNextSpinStartSoundRef.current) {
-                    skipNextSpinStartSoundRef.current = false;
-                } else {
-                    playSpinSound();
-                }
                 if (Number.parseFloat(playerInfo?.balance ?? "0") < Number.parseFloat(betAmounts[currentBet]?.amount)) {
                     setIsPlaying(false)
                     setSecond(0)
@@ -659,6 +653,7 @@ export default function Lucky777Game({
                                     onPointerUp={() => setPressedBtn(null)}
                                     onPointerLeave={() => setPressedBtn(null)}
                                     onClick={() => {
+                                        playSpinSound();
                                         if (currentBet) setCurrentBet(currentBet - 1);
                                     }}
                                 >
@@ -670,6 +665,7 @@ export default function Lucky777Game({
                                     onPointerUp={() => setPressedBtn(null)}
                                     onPointerLeave={() => setPressedBtn(null)}
                                     onClick={() => {
+                                        playSpinSound();
                                         if (currentBet + 1 !== betAmounts.length)
                                             setCurrentBet(currentBet + 1);
                                     }}
@@ -687,7 +683,6 @@ export default function Lucky777Game({
                                             setPressedBtn(null)
                                         } else {
                                             playSpinSound();
-                                            skipNextSpinStartSoundRef.current = true;
                                             setIsAutoMode(true);
                                             setIsPlaying(true);
                                         }
@@ -702,7 +697,6 @@ export default function Lucky777Game({
                                     onPointerLeave={() => setPressedBtn(null)}
                                     onClick={() => {
                                         playSpinSound();
-                                        skipNextSpinStartSoundRef.current = true;
                                         dismissWinModal(false);
                                         setIsPlaying(true);
                                     }}
@@ -871,7 +865,7 @@ export default function Lucky777Game({
                         )}
                         <audio
                             ref={spinSoundRef}
-                            src={getMusicUrl(GAME_MUSIC.sound)}
+                            src={getMusicUrlWithFallback(GAME_MUSIC.sound)}
                             preload="metadata"
                             playsInline
                         />

@@ -4,6 +4,8 @@ export type RuntimeGameConfig = {
   backendOrigin?: string;
   apiBaseUrl?: string;
   assetBaseUrl?: string;
+  soundEffectFile?: string;
+  backgroundMusicFile?: string;
   reverbHost?: string;
   reverbPort?: number | string;
   reverbScheme?: "http" | "https";
@@ -164,9 +166,32 @@ export function getMusicUrl(path: string): string {
   return `${MUSIC_BASE_URL}/${normalizedPath}`;
 }
 
+export function getMusicUrlWithFallback(path: string): string {
+  const normalizedPath = path.trim();
+
+  if (!normalizedPath) {
+    return "";
+  }
+
+  // Backend currently serves "supper7.mp3". Keep a safe fallback
+  // for older references using "super7.mp3".
+  if (/super7\.mp3$/i.test(normalizedPath)) {
+    const fallbackPath = normalizedPath.replace(/super7\.mp3$/i, "supper7.mp3");
+    return getMusicUrl(fallbackPath);
+  }
+
+  return getMusicUrl(normalizedPath);
+}
+
 export const GAME_MUSIC = {
-  sound: "supper7.mp3",
-  music: "super7.mp3",
+  sound:
+    runtimeConfig.soundEffectFile ||
+    import.meta.env.VITE_SOUND_EFFECT_FILE ||
+    "supper7.mp3",
+  music:
+    runtimeConfig.backgroundMusicFile ||
+    import.meta.env.VITE_BACKGROUND_MUSIC_FILE ||
+    "",
 };
 
 export const GAME_ASSETS = {
