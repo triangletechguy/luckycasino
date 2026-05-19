@@ -4,8 +4,6 @@ export type RuntimeGameConfig = {
   backendOrigin?: string;
   apiBaseUrl?: string;
   assetBaseUrl?: string;
-  soundEffectFile?: string;
-  backgroundMusicFile?: string;
   reverbHost?: string;
   reverbPort?: number | string;
   reverbScheme?: "http" | "https";
@@ -22,19 +20,22 @@ declare global {
 const runtimeConfig: RuntimeGameConfig =
   typeof window !== "undefined" ? window.__SUPER777_CONFIG__ ?? {} : {};
 
-function normalizeOrigin(origin: string): string {
-  return origin.replace(/\/+$/, "");
+function normalizeBaseUrl(value: string): string {
+  return value.replace(/\/+$/, "");
 }
 
-function normalizeBaseUrl(url: string): string {
-  return url.replace(/\/+$/, "");
-}
-
-function toBoolean(value: boolean | string | undefined, fallback: boolean): boolean {
-  if (typeof value === "boolean") return value;
+function toBoolean(
+  value: boolean | string | undefined,
+  fallback: boolean,
+): boolean {
+  if (typeof value === "boolean") {
+    return value;
+  }
 
   if (typeof value === "string") {
-    return value.toLowerCase() !== "false" && value !== "0";
+    const normalized = value.trim().toLowerCase();
+
+    return normalized !== "false" && normalized !== "0" && normalized !== "no";
   }
 
   return fallback;
@@ -42,7 +43,7 @@ function toBoolean(value: boolean | string | undefined, fallback: boolean): bool
 
 const DEFAULT_BACKEND_ORIGIN = "https://funint.site";
 
-export const BACKEND_ORIGIN = normalizeOrigin(
+export const BACKEND_ORIGIN = normalizeBaseUrl(
   runtimeConfig.backendOrigin ||
     import.meta.env.VITE_BACKEND_ORIGIN ||
     DEFAULT_BACKEND_ORIGIN,
@@ -54,16 +55,16 @@ export const APP_ORIGIN =
     : BACKEND_ORIGIN;
 
 /**
- * For Vercel, use:
- * VITE_API_BASE_URL=/api
+ * Use /api by default.
  *
- * Then vercel.json will forward /api/... to:
- * https://funint.site/api/...
+ * Local:
+ * vite.config.ts proxies /api to https://funint.site/api
+ *
+ * Vercel:
+ * vercel.json rewrites /api to https://funint.site/api
  */
 export const API_BASE_URL = normalizeBaseUrl(
-  runtimeConfig.apiBaseUrl ||
-    import.meta.env.VITE_API_BASE_URL ||
-    "/api",
+  runtimeConfig.apiBaseUrl || import.meta.env.VITE_API_BASE_URL || "/api",
 );
 
 export const INTRO_API_URL = `${API_BASE_URL}/intro`;
@@ -166,32 +167,32 @@ export function getMusicUrl(path: string): string {
   return `${MUSIC_BASE_URL}/${normalizedPath}`;
 }
 
-export function getMusicUrlWithFallback(path: string): string {
-  const normalizedPath = path.trim();
-
-  if (!normalizedPath) {
-    return "";
+/**
+ * Some components import this function.
+ * Keep this export so build does not fail.
+ *
+ * Usage examples:
+ * getMusicUrlWithFallback(GAME_MUSIC.music)
+ * getMusicUrlWithFallback(primaryPath, fallbackPath)
+ */
+export function getMusicUrlWithFallback(
+  path?: string | null,
+  fallbackPath?: string,
+): string {
+  if (path && path.trim() !== "") {
+    return getMusicUrl(path);
   }
 
-  // Backend currently serves "supper7.mp3". Keep a safe fallback
-  // for older references using "super7.mp3".
-  if (/super7\.mp3$/i.test(normalizedPath)) {
-    const fallbackPath = normalizedPath.replace(/super7\.mp3$/i, "supper7.mp3");
+  if (fallbackPath && fallbackPath.trim() !== "") {
     return getMusicUrl(fallbackPath);
   }
 
-  return getMusicUrl(normalizedPath);
+  return "";
 }
 
 export const GAME_MUSIC = {
-  sound:
-    runtimeConfig.soundEffectFile ||
-    import.meta.env.VITE_SOUND_EFFECT_FILE ||
-    "supper7.mp3",
-  music:
-    runtimeConfig.backgroundMusicFile ||
-    import.meta.env.VITE_BACKGROUND_MUSIC_FILE ||
-    "",
+  sound: "supper7.mp3",
+  music: "super7.mp3",
 };
 
 export const GAME_ASSETS = {

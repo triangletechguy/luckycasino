@@ -3,10 +3,7 @@ import { createRoot } from "react-dom/client";
 import axios from "axios";
 import "./index.css";
 import App from "./App.tsx";
-import {
-  checkIntroIntegration,
-  type IntroResponse,
-} from "./api/auth.ts";
+import { checkIntroIntegration, type IntroResponse } from "./api/auth.ts";
 import { closeCurrentView } from "./utils/closeCurrentView.ts";
 
 type NativeWindow = Window & {
@@ -22,26 +19,21 @@ type NativeWindow = Window & {
   };
 };
 
-type ParamSource = {
-  label: string;
-  value: string;
-};
+let root: ReturnType<typeof createRoot> | null = null;
 
-const USER_ID_PARAM_KEYS = ["userid", "user_id", "userId", "uid"] as const;
-const TOKEN_PARAM_KEYS = [
-  "token",
-  "auth_token",
-  "authToken",
-  "access_token",
-] as const;
+function getRoot(): ReturnType<typeof createRoot> {
+  const rootElement = document.getElementById("root");
 
-const rootElement = document.getElementById("root");
+  if (!rootElement) {
+    throw new Error("Root element #root not found.");
+  }
 
-if (!rootElement) {
-  throw new Error("Root element #root not found.");
+  if (!root) {
+    root = createRoot(rootElement);
+  }
+
+  return root;
 }
-
-const root = createRoot(rootElement);
 
 function isNativeView(): boolean {
   const nativeWindow = window as NativeWindow;
@@ -52,15 +44,13 @@ function isNativeView(): boolean {
   );
 }
 
+function shouldShowAuthDebug(): boolean {
+  return import.meta.env.DEV || import.meta.env.VITE_SHOW_AUTH_DEBUG === "true";
+}
+
 function maskToken(token: string | null): string {
-  if (!token) {
-    return "null";
-  }
-
-  if (token.length <= 6) {
-    return "***";
-  }
-
+  if (!token) return "null";
+  if (token.length <= 6) return "***";
   return `${token.slice(0, 3)}***${token.slice(-3)}`;
 }
 
@@ -73,79 +63,58 @@ function isSuccessStatus(status: IntroResponse["status"]): boolean {
   );
 }
 
-function tryDecodeURIComponent(value: string): string {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-}
+function addParamsFromString(params: URLSearchParams, value: string): void {
+  if (!value) return;
 
-function parseParamsFromCandidate(candidate: string): URLSearchParams | null {
-  const trimmed = candidate.trim();
-
-  if (!trimmed) {
-    return null;
-  }
-
-  try {
-    const url = new URL(trimmed);
-
-    if (url.search) {
-      return new URLSearchParams(url.search);
-    }
-
-    const hashQueryIndex = url.hash.indexOf("?");
-
-    if (hashQueryIndex >= 0) {
-      return new URLSearchParams(url.hash.slice(hashQueryIndex + 1));
-    }
-  } catch {
-    // Continue with query-like parsing below.
-  }
-
-  const normalizedQuery = trimmed
+  const normalizedValue = value
     .replace(/^[?#]/, "")
     .replace(/\?/g, "&")
-    .replace(/^&/, "");
+    .trim();
 
-  if (!normalizedQuery || !normalizedQuery.includes("=")) {
-    return null;
-  }
+  if (!normalizedValue) return;
 
-  return new URLSearchParams(normalizedQuery);
+  const sourceParams = new URLSearchParams(normalizedValue);
+
+  sourceParams.forEach((paramValue, paramKey) => {
+    if (!params.has(paramKey)) {
+      params.set(paramKey, paramValue);
+    }
+  });
 }
 
-function enqueueParamSource(
-  queue: ParamSource[],
-  seen: Set<string>,
-  label: string,
-  value: string,
-): void {
-  const trimmedValue = value.trim();
+function getGameUrlParams(): URLSearchParams {
+  const params = new URLSearchParams();
 
-  if (!trimmedValue) {
-    return;
+  addParamsFromString(params, window.location.search);
+
+  const hash = window.location.hash;
+  const hashQuestionIndex = hash.indexOf("?");
+
+  if (hashQuestionIndex >= 0) {
+    addParamsFromString(params, hash.slice(hashQuestionIndex + 1));
   }
 
-  const key = `${label}:${trimmedValue}`;
+  const hrefQuestionIndex = window.location.href.indexOf("?");
 
-  if (seen.has(key)) {
-    return;
+  if (hrefQuestionIndex >= 0) {
+    const hrefQuery = window.location.href
+      .slice(hrefQuestionIndex + 1)
+      .split("#")[0];
+
+    addParamsFromString(params, hrefQuery);
   }
 
-  seen.add(key);
-  queue.push({ label, value: trimmedValue });
+  return params;
 }
 
-function getParamByAliases(
+function getFirstParam(
   params: URLSearchParams,
-  aliases: readonly string[],
+  possibleKeys: string[],
 ): string | null {
-  const aliasSet = new Set(aliases.map((alias) => alias.toLowerCase()));
+  for (const key of possibleKeys) {
+    const value = params.get(key);
 
-  for (const [key, value] of params.entries()) {
-    if (aliasSet.has(key.toLowerCase()) && value.trim() !== "") {
+    if (value !== null && value.trim() !== "") {
       return value;
     }
   }
@@ -153,96 +122,8 @@ function getParamByAliases(
   return null;
 }
 
-function getGameLaunchParams(): {
-  userIdParam: string | null;
-  tokenParam: string | null;
-  source: string;
-} {
-  const queue: ParamSource[] = [];
-  const seen = new Set<string>();
-
-  enqueueParamSource(
-    queue,
-    seen,
-    "window.location.search",
-    window.location.search,
-  );
-  enqueueParamSource(
-    queue,
-    seen,
-    "window.location.hash",
-    window.location.hash,
-  );
-  enqueueParamSource(
-    queue,
-    seen,
-    "window.location.href",
-    window.location.href,
-  );
-
-  let lastUserId: string | null = null;
-  let lastToken: string | null = null;
-  let lastSource = "unknown";
-
-  while (queue.length > 0) {
-    const current = queue.shift();
-
-    if (!current) {
-      break;
-    }
-
-    const params = parseParamsFromCandidate(current.value);
-
-    if (!params) {
-      continue;
-    }
-
-    const userIdParam = getParamByAliases(params, USER_ID_PARAM_KEYS);
-    const tokenParam = getParamByAliases(params, TOKEN_PARAM_KEYS);
-
-    if (userIdParam !== null) {
-      lastUserId = userIdParam;
-      lastSource = current.label;
-    }
-
-    if (tokenParam !== null) {
-      lastToken = tokenParam;
-      lastSource = current.label;
-    }
-
-    if (userIdParam !== null && tokenParam !== null) {
-      return {
-        userIdParam,
-        tokenParam,
-        source: current.label,
-      };
-    }
-
-    for (const value of params.values()) {
-      enqueueParamSource(queue, seen, `${current.label} -> nested`, value);
-
-      const decodedValue = tryDecodeURIComponent(value);
-
-      if (decodedValue !== value) {
-        enqueueParamSource(
-          queue,
-          seen,
-          `${current.label} -> decoded`,
-          decodedValue,
-        );
-      }
-    }
-  }
-
-  return {
-    userIdParam: lastUserId,
-    tokenParam: lastToken,
-    source: lastSource,
-  };
-}
-
-function renderBootstrapError(title: string, details: string): void {
-  root.render(
+function renderAuthDebugError(title: string, details: string): void {
+  getRoot().render(
     <div
       style={{
         minHeight: "100vh",
@@ -254,7 +135,6 @@ function renderBootstrapError(title: string, details: string): void {
       }}
     >
       <h2 style={{ marginBottom: "12px", fontSize: "22px" }}>{title}</h2>
-
       <pre
         style={{
           whiteSpace: "pre-wrap",
@@ -269,6 +149,20 @@ function renderBootstrapError(title: string, details: string): void {
       </pre>
     </div>,
   );
+}
+
+function denyGameAccess(title: string, details: string): void {
+  console.error(title);
+  console.error(details);
+
+  localStorage.removeItem("user_id");
+
+  if (shouldShowAuthDebug() && !isNativeView()) {
+    renderAuthDebugError(title, details);
+    return;
+  }
+
+  closeCurrentView();
 }
 
 function formatError(error: unknown): string {
@@ -300,175 +194,39 @@ function formatError(error: unknown): string {
   return String(error);
 }
 
-function renderApp(): void {
-  root.render(
-    <StrictMode>
-      <App />
-    </StrictMode>,
-  );
-}
-
-function getDevFallbackUserId(): number {
-  const existingUserId = Number(localStorage.getItem("user_id"));
-
-  if (Number.isFinite(existingUserId) && existingUserId > 0) {
-    return existingUserId;
-  }
-
-  const configuredUserId = Number(import.meta.env.VITE_DEV_USER_ID);
-
-  if (Number.isFinite(configuredUserId) && configuredUserId > 0) {
-    return configuredUserId;
-  }
-
-  return 1;
-}
-
-function getStoredUserId(): number | null {
-  const storedUserId = Number(localStorage.getItem("user_id"));
-
-  if (Number.isFinite(storedUserId) && storedUserId > 0) {
-    return storedUserId;
-  }
-
-  return null;
-}
-
-function isTruthyEnvValue(value: unknown): boolean {
-  if (typeof value !== "string") {
-    return false;
-  }
-
-  const normalized = value.trim().toLowerCase();
-  return normalized === "1" || normalized === "true" || normalized === "yes";
-}
-
-function isFalsyEnvValue(value: unknown): boolean {
-  if (typeof value !== "string") {
-    return false;
-  }
-
-  const normalized = value.trim().toLowerCase();
-  return normalized === "0" || normalized === "false" || normalized === "no";
-}
-
-function isVercelDeploymentHost(): boolean {
-  return window.location.hostname.endsWith(".vercel.app");
-}
-
-function shouldAllowProductionFallback(): boolean {
-  if (!import.meta.env.PROD) {
-    return false;
-  }
-
-  const fallbackFlag = import.meta.env.VITE_ALLOW_PROD_FALLBACK;
-
-  if (isTruthyEnvValue(fallbackFlag)) {
-    return true;
-  }
-
-  if (isFalsyEnvValue(fallbackFlag)) {
-    return false;
-  }
-
-  // Helpful default for Vercel preview URLs opened directly in browser.
-  return isVercelDeploymentHost();
-}
-
-function getProductionFallbackUserId(): number | null {
-  const configuredProdFallbackUserId = Number(
-    import.meta.env.VITE_PROD_FALLBACK_USER_ID,
-  );
-
-  if (
-    Number.isFinite(configuredProdFallbackUserId) &&
-    configuredProdFallbackUserId > 0
-  ) {
-    return configuredProdFallbackUserId;
-  }
-
-  const configuredDevFallbackUserId = Number(import.meta.env.VITE_DEV_USER_ID);
-
-  if (
-    Number.isFinite(configuredDevFallbackUserId) &&
-    configuredDevFallbackUserId > 0
-  ) {
-    return configuredDevFallbackUserId;
-  }
-
-  if (isVercelDeploymentHost()) {
-    return 1;
-  }
-
-  return null;
-}
-
-function tryBootstrapWithoutLaunchParams(source: string): boolean {
-  const storedUserId = getStoredUserId();
-
-  if (storedUserId !== null) {
-    localStorage.setItem("user_id", storedUserId.toString());
-
-    console.warn(
-      `Missing launch params. Using existing localStorage user_id=${storedUserId}. Source: ${source}`,
-    );
-
-    renderApp();
-    return true;
-  }
-
-  const allowProdFallback = shouldAllowProductionFallback();
-  const configuredProdFallbackUserId = getProductionFallbackUserId();
-
-  if (
-    allowProdFallback &&
-    configuredProdFallbackUserId !== null
-  ) {
-    localStorage.setItem(
-      "user_id",
-      configuredProdFallbackUserId.toString(),
-    );
-
-    console.warn(
-      `Missing launch params in production. Using VITE_PROD_FALLBACK_USER_ID=${configuredProdFallbackUserId}. Source: ${source}`,
-    );
-
-    renderApp();
-    return true;
-  }
-
-  return false;
-}
-
 async function bootstrap(): Promise<void> {
-  const { userIdParam, tokenParam, source } = getGameLaunchParams();
+  localStorage.removeItem("user_id");
+
+  const params = getGameUrlParams();
+
+  const userIdParam = getFirstParam(params, [
+    "userid",
+    "user_id",
+    "userId",
+    "uid",
+  ]);
+
+  const tokenParam = getFirstParam(params, [
+    "token",
+    "auth_token",
+    "authToken",
+    "access_token",
+  ]);
+
   const userId = Number(userIdParam);
 
   if (
     userIdParam === null ||
     tokenParam === null ||
     tokenParam.trim() === "" ||
-    !Number.isFinite(userId) ||
+    !Number.isInteger(userId) ||
     userId <= 0
   ) {
-    if (import.meta.env.DEV) {
-      const fallbackUserId = getDevFallbackUserId();
-      localStorage.setItem("user_id", fallbackUserId.toString());
-
-      console.warn(
-        "Missing userid/token in development mode. Skipping intro integration check.",
-      );
-
-      renderApp();
-      return;
-    }
-
-    if (tryBootstrapWithoutLaunchParams(source)) {
-      return;
-    }
-
     const message = [
-      "Missing or invalid URL params.",
+      "Game access denied.",
+      "",
+      "Reason:",
+      "Missing or invalid userid/token.",
       "",
       "Required URL format:",
       "?userid=2&token=123456",
@@ -478,37 +236,29 @@ async function bootstrap(): Promise<void> {
       "#/game?userid=2&token=123456",
       "",
       `Current URL: ${window.location.href}`,
-      `Detected source: ${source}`,
-      "Hint: set VITE_ALLOW_PROD_FALLBACK=true and VITE_PROD_FALLBACK_USER_ID=1 on Vercel if needed.",
       "",
       `Received userid: ${String(userIdParam)}`,
       `Received token: ${maskToken(tokenParam)}`,
     ].join("\n");
 
-    console.error(message);
-
-    if (isNativeView()) {
-      closeCurrentView();
-      return;
-    }
-
-    renderBootstrapError("Invalid game URL", message);
+    denyGameAccess("Invalid game URL", message);
     return;
   }
 
   try {
-    localStorage.removeItem("user_id");
-
     const res = await checkIntroIntegration(userId, tokenParam);
     const responseUserId = Number(res.user_id);
 
     if (
       !isSuccessStatus(res.status) ||
-      !Number.isFinite(responseUserId) ||
+      !Number.isInteger(responseUserId) ||
       responseUserId <= 0
     ) {
       const message = [
-        "Intro API rejected this user/token.",
+        "Game access denied.",
+        "",
+        "Reason:",
+        "Intro API rejected this userid/token.",
         "",
         `userid: ${userId}`,
         `token: ${maskToken(tokenParam)}`,
@@ -517,21 +267,22 @@ async function bootstrap(): Promise<void> {
         JSON.stringify(res, null, 2),
       ].join("\n");
 
-      console.error(message);
-
-      if (isNativeView()) {
-        closeCurrentView();
-        return;
-      }
-
-      renderBootstrapError("Intro check rejected", message);
+      denyGameAccess("Intro check rejected", message);
       return;
     }
 
     localStorage.setItem("user_id", responseUserId.toString());
-    renderApp();
+
+    getRoot().render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    );
   } catch (error) {
     const message = [
+      "Game access denied.",
+      "",
+      "Reason:",
       "Intro API request failed.",
       "",
       "Possible reasons:",
@@ -547,14 +298,7 @@ async function bootstrap(): Promise<void> {
       formatError(error),
     ].join("\n");
 
-    console.error("Intro check failed", error);
-
-    if (isNativeView()) {
-      closeCurrentView();
-      return;
-    }
-
-    renderBootstrapError("Intro API failed", message);
+    denyGameAccess("Intro API failed", message);
   }
 }
 
