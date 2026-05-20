@@ -74,10 +74,18 @@ export const ASSET_BASE_URL = normalizeBaseUrl(
     `${BACKEND_ORIGIN}/core/storage/app/public`,
 );
 
-export const REVERB_KEY =
+function normalizeReverbKey(value: string): string {
+  return value
+    .trim()
+    .replace(/^KEY=/i, "")
+    .replace(/^app\//i, "");
+}
+
+export const REVERB_KEY = normalizeReverbKey(
   runtimeConfig.reverbAppKey ||
-  import.meta.env.VITE_REVERB_APP_KEY ||
-  "k6dbocgucm0at6gwak3y";
+    import.meta.env.VITE_REVERB_APP_KEY ||
+    "k6dbocgucm0at6gwak3y",
+);
 
 export const REALTIME_HOST =
   runtimeConfig.reverbHost || import.meta.env.VITE_REVERB_HOST || "funint.site";
