@@ -3,6 +3,9 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import { connectRealtime } from "./hooks/echo.ts";
+import "./utils/wsDebug.ts";
+import "./utils/wsTest.ts";
+import "./utils/startupInfo.ts";
 import { closeCurrentView } from "./utils/closeCurrentView.ts";
 import {
   clearLaunchUser,
@@ -215,8 +218,9 @@ function getLaunchParamsFromPath(): {
 function parseLaunchParams(): LaunchParams | null {
   const params = getAllUrlParams();
 
-  const allowDevFallback =
-    import.meta.env.DEV && import.meta.env.VITE_ALLOW_DEV_LOGIN === "true";
+  const allowTestFallback =
+    import.meta.env.VITE_ALLOW_TEST_LOGIN === "true" ||
+    (import.meta.env.DEV && import.meta.env.VITE_ALLOW_DEV_LOGIN === "true");
 
   let userIdParam = getFirstParam(params, USER_ID_PARAM_KEYS);
   let token = getFirstParam(params, TOKEN_PARAM_KEYS);
@@ -251,7 +255,7 @@ function parseLaunchParams(): LaunchParams | null {
     }
   }
 
-  if ((!userIdParam || !token) && allowDevFallback) {
+  if ((!userIdParam || !token) && allowTestFallback) {
     userIdParam = import.meta.env.VITE_TEST_USERID || userIdParam;
     token = import.meta.env.VITE_TEST_TOKEN || token;
     username = username || import.meta.env.VITE_TEST_USERNAME || undefined;
