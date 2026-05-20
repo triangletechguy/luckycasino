@@ -74,8 +74,6 @@ let activeBootstrapPromise: Promise<void> | null = null;
 let activePlayersPromise: Promise<ActivePlayers> | null = null;
 let gameRefreshPromise: Promise<void> | null = null;
 let gameRefreshQueued = false;
-const FALLBACK_REFRESH_MS = 15_000;
-let activePlayersRefreshTimer: ReturnType<typeof setInterval> | null = null;
 
 type ActivePlayersEvent = {
   data?: ACtivePlayersData[];
@@ -197,19 +195,6 @@ function updateActiveDataFromSocket(event: ActivePlayersEvent) {
     },
   });
 }
-function startActivePlayersFallbackRefresh() {
-  if (activePlayersRefreshTimer) return;
-  activePlayersRefreshTimer = setInterval(() => {
-    void fetchActiveData().catch((error) => {
-      console.error("Failed to refresh active players", error);
-    });
-  }, FALLBACK_REFRESH_MS);
-}
-function stopActivePlayersFallbackRefresh() {
-  if (!activePlayersRefreshTimer) return;
-  clearInterval(activePlayersRefreshTimer);
-  activePlayersRefreshTimer = null;
-}
 function initializeStore() {
   if (hasInitialized) return;
   hasInitialized = true;
@@ -223,7 +208,6 @@ function initializeStore() {
 }
 
 function updateActiveUsers() {
-  startActivePlayersFallbackRefresh();
   if (hasActive) return;
   hasActive = true;
   const channel = echo.channel(ACTIVE_CHANNEL);
@@ -291,9 +275,6 @@ export function useGame() {
     listeners.add(listener);
     return () => {
       listeners.delete(listener);
-      if (listeners.size === 0) {
-        stopActivePlayersFallbackRefresh();
-      }
     };
   }, []);
 const handlePrizeDistribution= useCallback(async () => {
