@@ -158,38 +158,36 @@ function getFirstParam(
 function parseLaunchParams(): LaunchParams | null {
   const params = getAllUrlParams();
 
-  const userIdParam = getFirstParam(params, USER_ID_PARAM_KEYS) ||
-    import.meta.env.VITE_TEST_USERID ||
-    import.meta.env.VITE_TEST_USER_ID ||
-    null;
-  
-  const token = getFirstParam(params, TOKEN_PARAM_KEYS) ||
-    import.meta.env.VITE_TEST_TOKEN ||
-    "test_token_12345";
+  const allowDevFallback =
+    import.meta.env.DEV && import.meta.env.VITE_ALLOW_DEV_LOGIN === "true";
 
-  const username =
-    getFirstParam(params, USERNAME_PARAM_KEYS) ||
-    import.meta.env.VITE_TEST_USERNAME ||
-    "Test Player";
+  let userIdParam = getFirstParam(params, USER_ID_PARAM_KEYS);
+  let token = getFirstParam(params, TOKEN_PARAM_KEYS);
 
-  const avater =
-    getFirstParam(params, AVATER_PARAM_KEYS) ||
-    import.meta.env.VITE_TEST_AVATER ||
-    import.meta.env.VITE_TEST_AVATAR ||
-    undefined;
+  let username = getFirstParam(params, USERNAME_PARAM_KEYS) ?? undefined;
+  let avater = getFirstParam(params, AVATER_PARAM_KEYS) ?? undefined;
+  let balanceParam = getFirstParam(params, BALANCE_PARAM_KEYS);
 
-  const balanceParam =
-    getFirstParam(params, BALANCE_PARAM_KEYS) ||
-    import.meta.env.VITE_TEST_BALANCE ||
-    "1000";
+  if ((!userIdParam || !token) && allowDevFallback) {
+    userIdParam = import.meta.env.VITE_TEST_USERID || userIdParam;
+    token = import.meta.env.VITE_TEST_TOKEN || token;
+    username = username || import.meta.env.VITE_TEST_USERNAME || undefined;
+    avater =
+      avater ||
+      import.meta.env.VITE_TEST_AVATER ||
+      import.meta.env.VITE_TEST_AVATAR ||
+      undefined;
+    balanceParam = balanceParam || import.meta.env.VITE_TEST_BALANCE || null;
+  }
 
-  const userId = Number(userIdParam ?? "1");
+  const userId = Number(userIdParam);
   const balance = balanceParam !== null ? Number(balanceParam) : undefined;
 
   if (
+    userIdParam === null ||
+    token === null ||
     !Number.isInteger(userId) ||
     userId <= 0 ||
-    !token ||
     token.trim() === ""
   ) {
     return null;

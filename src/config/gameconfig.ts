@@ -39,6 +39,16 @@ function toBoolean(
   return fallback;
 }
 
+function normalizeReverbKey(value: string): string {
+  return value
+    .trim()
+    .replace(/^KEY=/i, "")
+    .replace(/^APP_KEY=/i, "")
+    .replace(/^REVERB_APP_KEY=/i, "")
+    .replace(/^app\//i, "")
+    .replace(/^\/+/, "");
+}
+
 const DEFAULT_BACKEND_ORIGIN = "https://funint.site";
 
 export const BACKEND_ORIGIN = normalizeBaseUrl(
@@ -73,13 +83,6 @@ export const ASSET_BASE_URL = normalizeBaseUrl(
     import.meta.env.VITE_ASSET_BASE_URL ||
     `${BACKEND_ORIGIN}/core/storage/app/public`,
 );
-
-function normalizeReverbKey(value: string): string {
-  return value
-    .trim()
-    .replace(/^KEY=/i, "")
-    .replace(/^app\//i, "");
-}
 
 export const REVERB_KEY = normalizeReverbKey(
   runtimeConfig.reverbAppKey ||
