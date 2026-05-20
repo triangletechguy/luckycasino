@@ -3,18 +3,6 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "env": {
-    "VITE_GAME_ID": "@vite_game_id",
-    "VITE_GAME_NAME": "@vite_game_name",
-    "VITE_BACKEND_ORIGIN": "@vite_backend_origin",
-    "VITE_API_BASE_URL": "@vite_api_base_url",
-    "VITE_ASSET_BASE_URL": "@vite_asset_base_url",
-    "VITE_REVERB_APP_KEY": "@vite_reverb_app_key",
-    "VITE_REVERB_HOST": "@vite_reverb_host",
-    "VITE_REVERB_SCHEME": "@vite_reverb_scheme",
-    "VITE_REVERB_PORT": "@vite_reverb_port",
-    "VITE_REVERB_ENABLED": "@vite_reverb_enabled"
-  },
   "rewrites": [
     {
       "source": "/api/:path*",
