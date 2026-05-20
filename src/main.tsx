@@ -9,7 +9,6 @@ import "./utils/startupInfo.ts";
 import { closeCurrentView } from "./utils/closeCurrentView.ts";
 import {
   clearLaunchUser,
-  getStoredLaunchUser,
   saveLaunchUser,
 } from "./utils/user.ts";
 
@@ -219,8 +218,9 @@ function parseLaunchParams(): LaunchParams | null {
   const params = getAllUrlParams();
 
   const allowTestFallback =
-    import.meta.env.VITE_ALLOW_TEST_LOGIN === "true" ||
-    (import.meta.env.DEV && import.meta.env.VITE_ALLOW_DEV_LOGIN === "true");
+    import.meta.env.DEV &&
+    (import.meta.env.VITE_ALLOW_TEST_LOGIN === "true" ||
+      import.meta.env.VITE_ALLOW_DEV_LOGIN === "true");
 
   let userIdParam = getFirstParam(params, USER_ID_PARAM_KEYS);
   let token = getFirstParam(params, TOKEN_PARAM_KEYS);
@@ -234,25 +234,6 @@ function parseLaunchParams(): LaunchParams | null {
 
     userIdParam = userIdParam || pathLaunchParams.userIdParam;
     token = token || pathLaunchParams.token;
-  }
-
-  if (!userIdParam || !token) {
-    const storedLaunchUser = getStoredLaunchUser();
-
-    if (storedLaunchUser) {
-      userIdParam = userIdParam || String(storedLaunchUser.userId);
-      token = token || storedLaunchUser.token;
-      username = username || storedLaunchUser.username || undefined;
-      avater =
-        avater ||
-        storedLaunchUser.avater ||
-        storedLaunchUser.avatar ||
-        undefined;
-
-      if (balanceParam === null && typeof storedLaunchUser.balance === "number") {
-        balanceParam = String(storedLaunchUser.balance);
-      }
-    }
   }
 
   if ((!userIdParam || !token) && allowTestFallback) {

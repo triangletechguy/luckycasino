@@ -101,6 +101,12 @@ let realtimeStatus: RealtimeStatus = {
   updatedAt: new Date().toISOString(),
 };
 
+if (REALTIME_ENABLED) {
+  console.info("SUPER777 websocket endpoint configured:", realtimeUrl);
+} else {
+  console.info("SUPER777 websocket disabled by config.");
+}
+
 function updateRealtimeStatus(partial: Partial<RealtimeStatus>): void {
   realtimeStatus = {
     ...realtimeStatus,

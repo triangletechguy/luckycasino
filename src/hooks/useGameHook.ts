@@ -12,7 +12,6 @@ import {
   fetchMusicSetting,
   saveMusicSetting,
   betPlace,
-  fetchActivePlayers,
   fetchHistory,
   type History,
   type WinToday,
@@ -70,8 +69,6 @@ History:null,
 let hasInitialized = false;
 let hasActive = false;
 let initialLoadPromise: Promise<void> | null = null;
-let activeBootstrapPromise: Promise<void> | null = null;
-let activePlayersPromise: Promise<ActivePlayers> | null = null;
 let gameRefreshPromise: Promise<void> | null = null;
 let gameRefreshQueued = false;
 
@@ -172,16 +169,7 @@ function refreshGameDataWithQueue(): Promise<void> {
 
   return gameRefreshPromise;
 }
-async function fetchActiveData(){
-  if (!activePlayersPromise) {
-    activePlayersPromise = fetchActivePlayers().finally(() => {
-      activePlayersPromise = null;
-    });
-  }
-  const activePlayers = await activePlayersPromise;
-  updateStore({ActivePlayers:activePlayers})
-  return activePlayers;
-}
+
 function updateActiveDataFromSocket(event: ActivePlayersEvent) {
   const players = event.players ?? event.data ?? [];
   updateStore({
@@ -234,27 +222,10 @@ export async function bootstrapGameStore(): Promise<GameStore> {
 }
 export async function bootstrapActivePlayers() {
   updateActiveUsers();
-  if (store.ActivePlayers) {
-    return;
-  }
-  if (!activeBootstrapPromise) {
-    activeBootstrapPromise = fetchActiveData()
-      .then(() => undefined)
-      .finally(() => {
-        activeBootstrapPromise = null;
-      });
-  }
-  await activeBootstrapPromise;
 }
+
 export async function refreshActivePlayers() {
   updateActiveUsers();
-
-  if (store.ActivePlayers) {
-    return store.ActivePlayers;
-  }
-
-  await bootstrapActivePlayers();
-
   return store.ActivePlayers;
 }
 
