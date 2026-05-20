@@ -158,13 +158,19 @@ function getFirstParam(
 function parseLaunchParams(): LaunchParams | null {
   const params = getAllUrlParams();
 
-  const userIdParam = getFirstParam(params, USER_ID_PARAM_KEYS);
-  const token = getFirstParam(params, TOKEN_PARAM_KEYS);
+  const userIdParam = getFirstParam(params, USER_ID_PARAM_KEYS) ||
+    import.meta.env.VITE_TEST_USERID ||
+    import.meta.env.VITE_TEST_USER_ID ||
+    null;
+  
+  const token = getFirstParam(params, TOKEN_PARAM_KEYS) ||
+    import.meta.env.VITE_TEST_TOKEN ||
+    "test_token_12345";
 
   const username =
     getFirstParam(params, USERNAME_PARAM_KEYS) ||
     import.meta.env.VITE_TEST_USERNAME ||
-    undefined;
+    "Test Player";
 
   const avater =
     getFirstParam(params, AVATER_PARAM_KEYS) ||
@@ -175,16 +181,15 @@ function parseLaunchParams(): LaunchParams | null {
   const balanceParam =
     getFirstParam(params, BALANCE_PARAM_KEYS) ||
     import.meta.env.VITE_TEST_BALANCE ||
-    null;
+    "1000";
 
-  const userId = Number(userIdParam);
+  const userId = Number(userIdParam ?? "1");
   const balance = balanceParam !== null ? Number(balanceParam) : undefined;
 
   if (
-    userIdParam === null ||
-    token === null ||
     !Number.isInteger(userId) ||
     userId <= 0 ||
+    !token ||
     token.trim() === ""
   ) {
     return null;
