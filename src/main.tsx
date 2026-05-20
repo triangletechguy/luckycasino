@@ -4,7 +4,11 @@ import "./index.css";
 import App from "./App.tsx";
 import { connectRealtime } from "./hooks/echo.ts";
 import { closeCurrentView } from "./utils/closeCurrentView.ts";
-import { clearLaunchUser, saveLaunchUser } from "./utils/user.ts";
+import {
+  clearLaunchUser,
+  getStoredLaunchUser,
+  saveLaunchUser,
+} from "./utils/user.ts";
 
 type NativeWindow = Window & {
   Android?: {
@@ -27,8 +31,22 @@ type LaunchParams = {
   balance?: number;
 };
 
-const USER_ID_PARAM_KEYS = ["userid", "user_id", "userId", "uid"] as const;
-const TOKEN_PARAM_KEYS = ["token", "auth_token", "authToken", "access_token"] as const;
+const USER_ID_PARAM_KEYS = [
+  "id",
+  "userid",
+  "user_id",
+  "userId",
+  "uid",
+  "player_id",
+] as const;
+const TOKEN_PARAM_KEYS = [
+  "token",
+  "auth_token",
+  "authToken",
+  "access_token",
+  "accessToken",
+  "jwt",
+] as const;
 const USERNAME_PARAM_KEYS = ["username", "user_name", "name"] as const;
 const AVATER_PARAM_KEYS = ["avater", "avatar", "user_avatar", "profile"] as const;
 const BALANCE_PARAM_KEYS = ["balance", "amount", "wallet_balance"] as const;
@@ -52,6 +70,12 @@ function isNativeView(): boolean {
 
 function shouldShowDebug(): boolean {
   return import.meta.env.DEV || import.meta.env.VITE_SHOW_AUTH_DEBUG === "true";
+}
+
+function shouldCloseOnDeniedAccess(): boolean {
+  if (isNativeView()) return true;
+
+  return import.meta.env.VITE_CLOSE_ON_AUTH_ERROR === "true";
 }
 
 function renderError(title: string, details: string): void {
@@ -89,7 +113,7 @@ function denyGameAccess(title: string, details: string): void {
 
   clearLaunchUser();
 
-  if (shouldShowDebug() && !isNativeView()) {
+  if (shouldShowDebug() || !shouldCloseOnDeniedAccess()) {
     renderError(title, details);
     return;
   }
@@ -155,6 +179,39 @@ function getFirstParam(
   return null;
 }
 
+function decodePathSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
+function getLaunchParamsFromPath(): {
+  userIdParam: string | null;
+  token: string | null;
+} {
+  const segments = window.location.pathname
+    .split("/")
+    .map((segment) => decodePathSegment(segment.trim()))
+    .filter(Boolean);
+
+  if (segments.length < 2) {
+    return { userIdParam: null, token: null };
+  }
+
+  for (let index = 0; index < segments.length - 1; index += 1) {
+    const userIdParam = segments[index];
+    const token = segments[index + 1];
+
+    if (/^\d+$/.test(userIdParam) && token.trim() !== "") {
+      return { userIdParam, token: token.trim() };
+    }
+  }
+
+  return { userIdParam: null, token: null };
+}
+
 function parseLaunchParams(): LaunchParams | null {
   const params = getAllUrlParams();
 
@@ -167,6 +224,32 @@ function parseLaunchParams(): LaunchParams | null {
   let username = getFirstParam(params, USERNAME_PARAM_KEYS) ?? undefined;
   let avater = getFirstParam(params, AVATER_PARAM_KEYS) ?? undefined;
   let balanceParam = getFirstParam(params, BALANCE_PARAM_KEYS);
+
+  if (!userIdParam || !token) {
+    const pathLaunchParams = getLaunchParamsFromPath();
+
+    userIdParam = userIdParam || pathLaunchParams.userIdParam;
+    token = token || pathLaunchParams.token;
+  }
+
+  if (!userIdParam || !token) {
+    const storedLaunchUser = getStoredLaunchUser();
+
+    if (storedLaunchUser) {
+      userIdParam = userIdParam || String(storedLaunchUser.userId);
+      token = token || storedLaunchUser.token;
+      username = username || storedLaunchUser.username || undefined;
+      avater =
+        avater ||
+        storedLaunchUser.avater ||
+        storedLaunchUser.avatar ||
+        undefined;
+
+      if (balanceParam === null && typeof storedLaunchUser.balance === "number") {
+        balanceParam = String(storedLaunchUser.balance);
+      }
+    }
+  }
 
   if ((!userIdParam || !token) && allowDevFallback) {
     userIdParam = import.meta.env.VITE_TEST_USERID || userIdParam;
@@ -203,8 +286,6 @@ function parseLaunchParams(): LaunchParams | null {
 }
 
 function bootstrap(): void {
-  clearLaunchUser();
-
   const launchParams = parseLaunchParams();
 
   if (!launchParams) {
@@ -216,8 +297,10 @@ function bootstrap(): void {
         "Reason:",
         "Missing or invalid userid/token.",
         "",
-        "Required URL format:",
+        "Supported URL formats:",
         "?userid=2&token=187871878",
+        "?id=2&token=187871878",
+        "/2/187871878",
         "",
         `Current URL: ${window.location.href}`,
       ].join("\n"),

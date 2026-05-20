@@ -72,6 +72,8 @@ let hasActive = false;
 let initialLoadPromise: Promise<void> | null = null;
 let activeBootstrapPromise: Promise<void> | null = null;
 let activePlayersPromise: Promise<ActivePlayers> | null = null;
+let gameRefreshPromise: Promise<void> | null = null;
+let gameRefreshQueued = false;
 const FALLBACK_REFRESH_MS = 15_000;
 let activePlayersRefreshTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -154,6 +156,24 @@ async function runRefreshGameData() {
 
   updateStore(nextState);
 }
+
+function refreshGameDataWithQueue(): Promise<void> {
+  if (gameRefreshPromise) {
+    gameRefreshQueued = true;
+    return gameRefreshPromise;
+  }
+
+  gameRefreshPromise = (async () => {
+    do {
+      gameRefreshQueued = false;
+      await runRefreshGameData();
+    } while (gameRefreshQueued);
+  })().finally(() => {
+    gameRefreshPromise = null;
+  });
+
+  return gameRefreshPromise;
+}
 async function fetchActiveData(){
   if (!activePlayersPromise) {
     activePlayersPromise = fetchActivePlayers().finally(() => {
@@ -195,8 +215,10 @@ function initializeStore() {
   hasInitialized = true;
   const channel = echo.channel(REALTIME_CHANNEL);
   const eventName = `.${REALTIME_EVENT}`;
-  channel.listen(eventName, async () => {
-    await runRefreshGameData();
+  channel.listen(eventName, () => {
+    void refreshGameDataWithQueue().catch((error) => {
+      console.error("Failed to refresh game data from realtime event", error);
+    });
   });
 }
 
@@ -219,7 +241,7 @@ function updateActiveUsers() {
 export async function bootstrapGameStore(): Promise<GameStore> {
   initializeStore();
   if (!initialLoadPromise) {
-    initialLoadPromise = runRefreshGameData().finally(() => {
+    initialLoadPromise = refreshGameDataWithQueue().finally(() => {
       initialLoadPromise = null;
     });
   }
