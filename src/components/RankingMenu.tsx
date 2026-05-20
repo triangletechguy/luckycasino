@@ -21,11 +21,8 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
     const [isTodayRanking, setIsTodayRanking] = useState(true)
     const [result, setResult] = useState(0);
     const [time, setTime] = useState("");
-    const { handleRanking, handleJackPot, handleRemainingToday, ranking, jackpot } = useGame()
-    useEffect(() => {
-        handleRanking()
-        handleJackPot()
-    }, [])
+    const { handleRemainingToday, ranking, jackpot } = useGame()
+    
     useEffect(() => {
         const load = async () => {
             const data = await handleRemainingToday();

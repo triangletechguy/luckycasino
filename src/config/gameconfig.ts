@@ -1,9 +1,12 @@
-export const GAME_ID = 1;
+export const GAME_ID = Number(import.meta.env.VITE_GAME_ID || 1);
+export const GAME_NAME = import.meta.env.VITE_GAME_NAME || "Super 777";
 
 export type RuntimeGameConfig = {
   backendOrigin?: string;
   apiBaseUrl?: string;
   assetBaseUrl?: string;
+  soundEffectFile?: string;
+  backgroundMusicFile?: string;
   reverbHost?: string;
   reverbPort?: number | string;
   reverbScheme?: "http" | "https";
@@ -28,13 +31,10 @@ function toBoolean(
   value: boolean | string | undefined,
   fallback: boolean,
 ): boolean {
-  if (typeof value === "boolean") {
-    return value;
-  }
+  if (typeof value === "boolean") return value;
 
   if (typeof value === "string") {
     const normalized = value.trim().toLowerCase();
-
     return normalized !== "false" && normalized !== "0" && normalized !== "no";
   }
 
@@ -54,20 +54,18 @@ export const APP_ORIGIN =
     ? window.location.origin
     : BACKEND_ORIGIN;
 
-/**
- * Use /api by default.
- *
- * Local:
- * vite.config.ts proxies /api to https://funint.site/api
- *
- * Vercel:
- * vercel.json rewrites /api to https://funint.site/api
- */
 export const API_BASE_URL = normalizeBaseUrl(
   runtimeConfig.apiBaseUrl || import.meta.env.VITE_API_BASE_URL || "/api",
 );
 
+/**
+ * User integration is NOT needed for this game.
+ * Keep these constants only for compatibility. Do not call them during launch.
+ */
+export const USER_INTEGRATION_API_URL = `${API_BASE_URL}/user-integration`;
 export const INTRO_API_URL = `${API_BASE_URL}/intro`;
+export const GAMES_API_URL = `${API_BASE_URL}/games`;
+
 export const GAME_DETAILS_API_URL = `${API_BASE_URL}/game-details/${GAME_ID}`;
 export const REMAINING_API_URL = `${API_BASE_URL}/remaining_today`;
 export const RANKING_API_URL = `${API_BASE_URL}/ranking`;
@@ -125,9 +123,7 @@ export const ACTIVE_CHANNEL = "user-activity";
 export const ACTIVE_EVENT = "user-activity.updated";
 
 export function getAssetUrl(path: string): string {
-  if (!path) {
-    return "";
-  }
+  if (!path) return "";
 
   if (/^https?:\/\//i.test(path)) {
     return path;
@@ -148,9 +144,7 @@ export const MUSIC_BASE_URL = `${ASSET_BASE_URL}/super777`;
 export const SOUND_BASE_URL = `${ASSET_BASE_URL}/super777`;
 
 export function getMusicUrl(path: string): string {
-  if (!path) {
-    return "";
-  }
+  if (!path) return "";
 
   if (/^https?:\/\//i.test(path)) {
     return path;
@@ -167,32 +161,30 @@ export function getMusicUrl(path: string): string {
   return `${MUSIC_BASE_URL}/${normalizedPath}`;
 }
 
-/**
- * Some components import this function.
- * Keep this export so build does not fail.
- *
- * Usage examples:
- * getMusicUrlWithFallback(GAME_MUSIC.music)
- * getMusicUrlWithFallback(primaryPath, fallbackPath)
- */
 export function getMusicUrlWithFallback(
   path?: string | null,
   fallbackPath?: string,
 ): string {
-  if (path && path.trim() !== "") {
-    return getMusicUrl(path);
+  if (path && path.trim()) {
+    return getMusicUrl(path.trim());
   }
 
-  if (fallbackPath && fallbackPath.trim() !== "") {
-    return getMusicUrl(fallbackPath);
+  if (fallbackPath && fallbackPath.trim()) {
+    return getMusicUrl(fallbackPath.trim());
   }
 
   return "";
 }
 
 export const GAME_MUSIC = {
-  sound: "supper7.mp3",
-  music: "super7.mp3",
+  sound:
+    runtimeConfig.soundEffectFile ||
+    import.meta.env.VITE_SOUND_EFFECT_FILE ||
+    "supper7.mp3",
+  music:
+    runtimeConfig.backgroundMusicFile ||
+    import.meta.env.VITE_BACKGROUND_MUSIC_FILE ||
+    "super7.mp3",
 };
 
 export const GAME_ASSETS = {

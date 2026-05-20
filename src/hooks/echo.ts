@@ -28,6 +28,7 @@ type EchoChannelLike = {
 
 export type EchoLike = {
   channel: (name: string) => EchoChannelLike;
+  disconnect?: () => void;
 };
 
 const noopChannel: EchoChannelLike = {
@@ -39,23 +40,46 @@ const noopChannel: EchoChannelLike = {
 
 const noopEcho: EchoLike = {
   channel: () => noopChannel,
+  disconnect: () => undefined,
 };
 
-export const echo: EchoLike = REALTIME_ENABLED
-  ? (new Echo({
-      broadcaster: "reverb",
-      key: REVERB_KEY,
+let echoInstance: EchoLike | null = null;
 
-      wsHost: REALTIME_HOST,
-      wsPort: REALTIME_PORT,
-      wssPort: REALTIME_PORT,
+export function connectRealtime(): EchoLike {
+  if (!REALTIME_ENABLED) {
+    echoInstance = noopEcho;
+    return echoInstance;
+  }
 
-      forceTLS: USE_TLS,
-      encrypted: USE_TLS,
-      enabledTransports: USE_TLS ? ["wss"] : ["ws"],
+  if (echoInstance) {
+    return echoInstance;
+  }
 
-      disableStats: true,
-      cluster: "",
-      namespace: false,
-    }) as unknown as EchoLike)
-  : noopEcho;
+  echoInstance = new Echo({
+    broadcaster: "reverb",
+    key: REVERB_KEY,
+
+    wsHost: REALTIME_HOST,
+    wsPort: REALTIME_PORT,
+    wssPort: REALTIME_PORT,
+
+    forceTLS: USE_TLS,
+    encrypted: USE_TLS,
+    enabledTransports: USE_TLS ? ["wss"] : ["ws"],
+
+    disableStats: true,
+    cluster: "",
+    namespace: false,
+  }) as unknown as EchoLike;
+
+  return echoInstance;
+}
+
+export function getRealtime(): EchoLike {
+  return echoInstance ?? connectRealtime();
+}
+
+export function disconnectRealtime(): void {
+  echoInstance?.disconnect?.();
+  echoInstance = null;
+}

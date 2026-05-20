@@ -82,7 +82,7 @@ export default function Lucky777Game({
     const [resultPending, setResultPending] = useState(false)
     const [isAutoMode, setIsAutoMode] = useState(false)
     const [isPlaying, setIsPlaying] = useState(false)
-    const { betAmounts, options, ranking, placeBet, playerInfo, ActivePlayers, handleWinToday, handlePlayerInfo } = useGame()
+    const { betAmounts, options, ranking, placeBet, playerInfo, ActivePlayers, winToday} = useGame()
     const [currentBet, setCurrentBet] = useState(0)
     const [second, setSecond] = useState(0);
     const [startValue, setStartValue] = useState([13, 13, 13, 14, 14, 14, 15, 15, 15,])
@@ -90,7 +90,6 @@ export default function Lucky777Game({
     const [statusArray, setStatusArray] = useState<number[]>([0, 0, 0, 0, 0, 0, 0, 0, 0]);
     const [winAmount, setWinAmount] = useState(0)
     const [showWinAmount, setShowWinAmount] = useState(0)
-    const [winToday, setWinToday] = useState(0)
     const [isWinAniShowed, setIsWinAniShowed] = useState(false)
     const [pressedBtn, setPressedBtn] = useState<string | null>(null);
     const [forCoinBoard, setForCoinBoard] = useState(0)
@@ -207,9 +206,7 @@ export default function Lucky777Game({
                 setIsPending(false);
                 setIsRolling(true);
             }
-            if (second === 500) {
-                handlePlayerInfo()
-            }
+          
             if (second === 2900) {
                 setStatusArray((prev) => {
                     const newStatus = [...prev];
@@ -243,10 +240,7 @@ export default function Lucky777Game({
                 setIsRolling(false)
                 setIsResulting(true)
                 setShowWinAmount(winAmount)
-                void handleWinToday()
-                    .then((res) => {
-                        setWinToday(res.win)
-                    })
+              
                 if (normalWin) {
                     setWinModal(false)
                     setIsOpenWinAni(true)
@@ -628,7 +622,7 @@ export default function Lucky777Game({
                                             style={{ fontFamily: "MyBoldFont", letterSpacing: "2px" }}>{parseFloat(betAmounts[currentBet]?.amount).toString()}</span>
                                     </div>
                                     <div className="bg-[#000000] h-[24px] w-[100px] rounded-[4px] text-center">
-                                        <span className="bg-gradient-to-t from-[#EFC32F] to-[#FBF9D2] bg-clip-text text-transparent font-bold text-[17px] align-middle ">{formatNumber(Number(winToday))}</span>
+                                        <span className="bg-gradient-to-t from-[#EFC32F] to-[#FBF9D2] bg-clip-text text-transparent font-bold text-[17px] align-middle ">{formatNumber(Number(winToday?.win ?? 0))}</span>
                                     </div>
                                     <div className="bg-[#000000] h-[24px] w-[100px] rounded-[4px] text-center ">
                                         {isResulting && winAmount > 0 && (<motion.img src={getAssetUrl(GAME_ASSETS.shine)} alt="shine" className="absolute"

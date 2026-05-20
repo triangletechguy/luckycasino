@@ -1,45 +1,14 @@
 import axios from "axios";
-import {
-  ACTIVE_PLAYERS_API_URL,
-  BET_PLACE_API_URL,
-  GAME_DETAILS_API_URL,
-  GAME_ID,
-  HISTORY_API_URL,
-  JACKPOT_API_URL,
-  MUSIC_SETTING_API_URL,
-  PLAYER_API_URL,
-  PRIZE_DISTRIBUTIONS_API_URL,
-  RANKING_API_URL,
-  RECHARGE_URL_API_URL,
-  REMAINING_API_URL,
-  WIN_TODAY_API_URL,
-} from "../config/gameconfig";
+import { BET_PLACE_API_URL, GAME_ID } from "../config/gameconfig";
 import { getRequiredUserId } from "../utils/user";
 
-type ApiStatus = boolean | number | string | undefined;
-
-function isTruthyStatus(status: ApiStatus): boolean {
-  if (status === undefined || status === null) return false;
-  if (typeof status === "boolean") return status;
-  if (typeof status === "number") return status === 1;
-
-  const normalized = status.trim().toLowerCase();
-  return normalized === "true" || normalized === "1" || normalized === "success";
-}
-
-function assertStatus(status: ApiStatus, message: string): void {
-  if (!isTruthyStatus(status)) {
-    throw new Error(message);
-  }
-}
-
-type GameOption = {
+export type GameOption = {
   id: number;
   name: string;
   logo: string;
 };
 
-type BetAmount = {
+export type BetAmount = {
   id: number;
   amount: string;
   icon: string;
@@ -57,36 +26,16 @@ export type GameDetailsData = {
   bet_amounts?: BetAmount[];
 };
 
-type GameDetails = {
-  status?: boolean | number | string;
-  data?: GameDetailsData;
-  message?: string;
-};
-
-export const fetchGameDetail = async (): Promise<GameDetailsData> => {
-  const response = await axios.get<GameDetails>(GAME_DETAILS_API_URL);
-  assertStatus(response.data.status, response.data.message || "Game details API failed.");
-
-  return response.data.data ?? {};
-};
-
-type RemainingTodayData = {
+export type RemainingTodayData = {
   server_time: string;
   end_time: string;
   remaining_seconds: number;
 };
 
 export type RemainingToday = {
-  status: boolean;
+  status: boolean | number | string;
   data: RemainingTodayData;
   message: string;
-};
-
-export const fetchRemainingToday = async (): Promise<RemainingToday> => {
-  const response = await axios.get<RemainingToday>(REMAINING_API_URL);
-  assertStatus(response.data.status, response.data.message || "Remaining today API failed.");
-
-  return response.data;
 };
 
 export type RankingItem = {
@@ -118,37 +67,10 @@ export type RankingResponse = {
   yesterday_my_ranking?: MyRanking | null;
 };
 
-export const fetchRanking = async (): Promise<RankingResponse> => {
-  const userId = getRequiredUserId();
-  const response = await axios.get<RankingResponse>(`${RANKING_API_URL}/${userId}`);
-  assertStatus(response.data.status, "Ranking API failed.");
-
-  return response.data;
-};
-
-type Jackpot = {
-  status: boolean | number | string;
-  amount: string;
-};
-
-export const fetchJackpot = async (): Promise<Jackpot> => {
-  const response = await axios.get<Jackpot>(JACKPOT_API_URL);
-  assertStatus(response.data.status, "Jackpot API failed.");
-
-  return response.data;
-};
-
 export type RechargeUrlResponse = {
   status?: boolean | number | string;
   message?: string;
   url?: string;
-};
-
-export const fetchRechargeUrl = async (): Promise<RechargeUrlResponse> => {
-  const response = await axios.get<RechargeUrlResponse>(RECHARGE_URL_API_URL);
-  assertStatus(response.data.status, response.data.message || "Recharge URL API failed.");
-
-  return response.data;
 };
 
 type RankPrize = {
@@ -164,38 +86,11 @@ export type PrizeDistributionProps = {
   message: string;
 };
 
-export const fetchPrizeDistribution =
-  async (): Promise<PrizeDistributionProps> => {
-    const response = await axios.get<PrizeDistributionProps>(
-      PRIZE_DISTRIBUTIONS_API_URL,
-    );
-    assertStatus(
-      response.data.status,
-      response.data.message || "Prize distribution API failed.",
-    );
-
-    return response.data;
-  };
-
 export type PlayerDetailsData = {
   id?: number;
   username?: string;
   avater?: string;
   balance?: string;
-};
-
-type PlayerDetails = {
-  status?: boolean | number | string;
-  data?: PlayerDetailsData;
-  message?: string;
-};
-
-export const fetchPlayerInfo = async (): Promise<PlayerDetailsData> => {
-  const userId = getRequiredUserId();
-  const response = await axios.get<PlayerDetails>(`${PLAYER_API_URL}/${userId}`);
-  assertStatus(response.data.status, response.data.message || "Player API failed.");
-
-  return response.data.data ?? {};
 };
 
 type SlotElement = {
@@ -204,9 +99,7 @@ type SlotElement = {
 };
 
 export type BetPlaceResponse = {
-  /** API documentation uses success boolean. */
   success?: boolean;
-  /** API documentation uses status: "win" or "lost". */
   status?: "win" | "lost" | string | boolean | number;
   win_amount: string;
   result: {
@@ -214,118 +107,15 @@ export type BetPlaceResponse = {
     set_B: SlotElement[];
     set_C: SlotElement[];
   };
-  /** Backend may send BIG WIN / MEGA WIN / SUPER WIN / null. */
-  win_type: string | null;
+  win_type?: string | null;
 };
 
 export type betPlace = BetPlaceResponse;
-
-function validateBetPlaceResponse(data: BetPlaceResponse): void {
-  const normalizedStatus = String(data.status ?? "").trim().toLowerCase();
-  const isSuccessfulRequest =
-    data.success === true ||
-    data.status === true ||
-    data.status === 1 ||
-    normalizedStatus === "true" ||
-    normalizedStatus === "1" ||
-    normalizedStatus === "win" ||
-    normalizedStatus === "lost";
-
-  if (!isSuccessfulRequest) {
-    throw new Error("Bet place API failed.");
-  }
-
-  if (!data.result?.set_A || !data.result?.set_B || !data.result?.set_C) {
-    throw new Error("Bet place API response is missing result sets.");
-  }
-
-  if (
-    data.result.set_A.length < 3 ||
-    data.result.set_B.length < 3 ||
-    data.result.set_C.length < 3
-  ) {
-    throw new Error("Bet place API response must contain a 3x3 slot result.");
-  }
-}
-
-export const betPlace = async (amount: number): Promise<betPlace> => {
-  const userId = getRequiredUserId();
-
-  if (!Number.isFinite(amount) || amount <= 0) {
-    throw new Error("Invalid bet amount.");
-  }
-
-  /**
-   * Matches the PDF documentation exactly:
-   * POST /bet-place
-   * {
-   *   "user_id": 2,
-   *   "amount": 1000
-   * }
-   */
-  const response = await axios.post<BetPlaceResponse>(BET_PLACE_API_URL, {
-    user_id: userId,
-    amount,
-  });
-
-  validateBetPlaceResponse(response.data);
-
-  return {
-    ...response.data,
-    win_type: response.data.win_type ?? null,
-  };
-};
-
-type MusicSettingResponse = {
-  status?: boolean | number | string;
-  data?: number;
-  message?: string;
-};
-
-export const fetchMusicSetting = async (): Promise<boolean> => {
-  const userId = getRequiredUserId();
-  const response = await axios.get<MusicSettingResponse>(
-    `${MUSIC_SETTING_API_URL}/${GAME_ID}/${userId}`,
-  );
-  assertStatus(response.data.status, response.data.message || "Music setting API failed.");
-
-  return response.data.data === 1;
-};
-
-type SaveMusicSettingResponse = {
-  status?: boolean | number | string;
-  message?: string;
-};
-
-export const saveMusicSetting = async (
-  isMusicOn: boolean,
-): Promise<SaveMusicSettingResponse> => {
-  const userId = getRequiredUserId();
-  const response = await axios.post<SaveMusicSettingResponse>(
-    MUSIC_SETTING_API_URL,
-    {
-      game_id: GAME_ID,
-      user_id: userId,
-      status: isMusicOn ? 1 : 0,
-    },
-  );
-  assertStatus(response.data.status, response.data.message || "Save music setting API failed.");
-
-  return response.data;
-};
 
 export type WinToday = {
   status: boolean | number | string;
   user_id: number;
   win: number;
-};
-
-export const fetchWinToday = async (): Promise<WinToday> => {
-  const userId = getRequiredUserId();
-  const response = await axios.get<WinToday>(`${WIN_TODAY_API_URL}/${userId}`);
-  assertStatus(response.data.status, "Win today API failed.");
-
-  return response.data;
 };
 
 export type ACtivePlayersData = {
@@ -345,16 +135,6 @@ export type ActivePlayers = {
   total_amount: number;
   total_user: number;
   data: ACtivePlayersData[];
-};
-
-export const fetchActivePlayers = async (): Promise<ActivePlayers> => {
-  const response = await axios.get<ActivePlayers>(ACTIVE_PLAYERS_API_URL);
-
-  if (!response.data.status) {
-    throw new Error("Active players API failed.");
-  }
-
-  return response.data;
 };
 
 type HistoryElement = {
@@ -385,10 +165,125 @@ export type History = {
   data: HistoryData[];
 };
 
-export const fetchHistory = async (): Promise<History> => {
+function isSuccessfulBetResponse(data: BetPlaceResponse): boolean {
+  const normalizedStatus = String(data.status ?? "").trim().toLowerCase();
+
+  return (
+    data.success === true ||
+    data.status === true ||
+    data.status === 1 ||
+    normalizedStatus === "true" ||
+    normalizedStatus === "1" ||
+    normalizedStatus === "win" ||
+    normalizedStatus === "lost"
+  );
+}
+
+function validateBetPlaceResponse(data: BetPlaceResponse): void {
+  if (!isSuccessfulBetResponse(data)) {
+    throw new Error("Bet place API failed.");
+  }
+
+  if (!data.result?.set_A || !data.result?.set_B || !data.result?.set_C) {
+    throw new Error("Bet place API response is missing result sets.");
+  }
+}
+
+/**
+ * Allowed user-action API.
+ * Spin uses POST /bet-place with { user_id, amount }.
+ */
+export const betPlace = async (amount: number): Promise<betPlace> => {
   const userId = getRequiredUserId();
-  const response = await axios.get<History>(`${HISTORY_API_URL}/${userId}`);
-  assertStatus(response.data.status, "History API failed.");
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("Invalid bet amount.");
+  }
+
+  const response = await axios.post<BetPlaceResponse>(BET_PLACE_API_URL, {
+    user_id: userId,
+    amount,
+  });
+
+  validateBetPlaceResponse(response.data);
 
   return response.data;
 };
+
+/**
+ * Realtime mode: these functions do not make HTTP requests.
+ * The backend should send current data through websocket payloads.
+ */
+export const fetchGameDetail = async (): Promise<GameDetailsData> => ({
+  id: GAME_ID,
+  name: "Super 777",
+  options: [],
+  bet_amounts: [],
+});
+
+export const fetchRemainingToday = async (): Promise<RemainingToday> => ({
+  status: true,
+  data: {
+    server_time: new Date().toISOString(),
+    end_time: new Date().toISOString(),
+    remaining_seconds: 0,
+  },
+  message: "Realtime mode: remaining time should come from websocket.",
+});
+
+export const fetchRanking = async (): Promise<RankingResponse> => ({
+  status: true,
+  gift: "",
+  today: [],
+  today_my_ranking: null,
+  yesterday: [],
+  yesterday_my_ranking: null,
+});
+
+export const fetchJackpot = async (): Promise<{ status: boolean; amount: string }> => ({
+  status: true,
+  amount: "0",
+});
+
+export const fetchRechargeUrl = async (): Promise<RechargeUrlResponse> => ({
+  status: true,
+  url: "",
+});
+
+export const fetchPrizeDistribution = async (): Promise<PrizeDistributionProps> => ({
+  status: true,
+  ranks: [],
+  policy: [],
+  message: "Realtime mode: prize distribution should come from websocket.",
+});
+
+export const fetchPlayerInfo = async (): Promise<PlayerDetailsData> => ({
+  id: getRequiredUserId(),
+});
+
+export const fetchMusicSetting = async (): Promise<boolean> => true;
+
+export const saveMusicSetting = async (
+  _isMusicOn: boolean,
+): Promise<{ status: boolean; message: string }> => ({
+  status: true,
+  message: "Local music setting updated.",
+});
+
+export const fetchWinToday = async (): Promise<WinToday> => ({
+  status: true,
+  user_id: getRequiredUserId(),
+  win: 0,
+});
+
+export const fetchActivePlayers = async (): Promise<ActivePlayers> => ({
+  status: true,
+  total_amount: 0,
+  total_user: 0,
+  data: [],
+});
+
+export const fetchHistory = async (): Promise<History> => ({
+  status: true,
+  data: [],
+});

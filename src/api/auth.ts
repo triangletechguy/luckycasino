@@ -1,21 +1,17 @@
-import axios from "axios";
-import { INTRO_API_URL } from "../config/gameconfig";
+/**
+ * Company confirmed user integration is not needed for this game.
+ * Keep this file only for backwards compatibility with old imports.
+ */
 
 export type IntroResponse = {
-  status?: boolean | number | string;
-  user_id?: number | string;
-  message?: string;
-  [key: string]: unknown;
+  status: boolean;
+  user_id?: number;
 };
 
 export const checkIntroIntegration = async (
   userId: number,
-  token: string,
-): Promise<IntroResponse> => {
-  const response = await axios.post<IntroResponse>(INTRO_API_URL, {
-    userid: userId,
-    token,
-  });
-
-  return response.data;
-};
+  _token: number | string,
+): Promise<IntroResponse> => ({
+  status: Number.isInteger(userId) && userId > 0,
+  user_id: userId,
+});

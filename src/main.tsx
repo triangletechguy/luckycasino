@@ -1,10 +1,9 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import axios from "axios";
 import "./index.css";
-import App from "./App.tsx";
-import { checkIntroIntegration, type IntroResponse } from "./api/auth.ts";
+import { connectRealtime } from "./hooks/echo.ts";
 import { closeCurrentView } from "./utils/closeCurrentView.ts";
+import { clearLaunchUser, saveLaunchUser } from "./utils/user.ts";
 
 type NativeWindow = Window & {
   Android?: {
@@ -19,21 +18,27 @@ type NativeWindow = Window & {
   };
 };
 
-let root: ReturnType<typeof createRoot> | null = null;
+type LaunchParams = {
+  userId: number;
+  token: string;
+  username?: string;
+  avater?: string;
+  balance?: number;
+};
 
-function getRoot(): ReturnType<typeof createRoot> {
-  const rootElement = document.getElementById("root");
+const USER_ID_PARAM_KEYS = ["userid", "user_id", "userId", "uid"] as const;
+const TOKEN_PARAM_KEYS = ["token", "auth_token", "authToken", "access_token"] as const;
+const USERNAME_PARAM_KEYS = ["username", "user_name", "name"] as const;
+const AVATER_PARAM_KEYS = ["avater", "avatar", "user_avatar", "profile"] as const;
+const BALANCE_PARAM_KEYS = ["balance", "amount", "wallet_balance"] as const;
 
-  if (!rootElement) {
-    throw new Error("Root element #root not found.");
-  }
+const rootElement = document.getElementById("root");
 
-  if (!root) {
-    root = createRoot(rootElement);
-  }
-
-  return root;
+if (!rootElement) {
+  throw new Error("Root element #root not found.");
 }
+
+const root = createRoot(rootElement);
 
 function isNativeView(): boolean {
   const nativeWindow = window as NativeWindow;
@@ -48,82 +53,14 @@ function shouldShowAuthDebug(): boolean {
   return import.meta.env.DEV || import.meta.env.VITE_SHOW_AUTH_DEBUG === "true";
 }
 
-function maskToken(token: string | null): string {
+function maskToken(token: string | null | undefined): string {
   if (!token) return "null";
   if (token.length <= 6) return "***";
   return `${token.slice(0, 3)}***${token.slice(-3)}`;
 }
 
-function isSuccessStatus(status: IntroResponse["status"]): boolean {
-  return (
-    status === true ||
-    status === 1 ||
-    status === "1" ||
-    String(status).toLowerCase() === "true"
-  );
-}
-
-function addParamsFromString(params: URLSearchParams, value: string): void {
-  if (!value) return;
-
-  const normalizedValue = value
-    .replace(/^[?#]/, "")
-    .replace(/\?/g, "&")
-    .trim();
-
-  if (!normalizedValue) return;
-
-  const sourceParams = new URLSearchParams(normalizedValue);
-
-  sourceParams.forEach((paramValue, paramKey) => {
-    if (!params.has(paramKey)) {
-      params.set(paramKey, paramValue);
-    }
-  });
-}
-
-function getGameUrlParams(): URLSearchParams {
-  const params = new URLSearchParams();
-
-  addParamsFromString(params, window.location.search);
-
-  const hash = window.location.hash;
-  const hashQuestionIndex = hash.indexOf("?");
-
-  if (hashQuestionIndex >= 0) {
-    addParamsFromString(params, hash.slice(hashQuestionIndex + 1));
-  }
-
-  const hrefQuestionIndex = window.location.href.indexOf("?");
-
-  if (hrefQuestionIndex >= 0) {
-    const hrefQuery = window.location.href
-      .slice(hrefQuestionIndex + 1)
-      .split("#")[0];
-
-    addParamsFromString(params, hrefQuery);
-  }
-
-  return params;
-}
-
-function getFirstParam(
-  params: URLSearchParams,
-  possibleKeys: string[],
-): string | null {
-  for (const key of possibleKeys) {
-    const value = params.get(key);
-
-    if (value !== null && value.trim() !== "") {
-      return value;
-    }
-  }
-
-  return null;
-}
-
-function renderAuthDebugError(title: string, details: string): void {
-  getRoot().render(
+function renderBootstrapError(title: string, details: string): void {
+  root.render(
     <div
       style={{
         minHeight: "100vh",
@@ -154,152 +91,179 @@ function renderAuthDebugError(title: string, details: string): void {
 function denyGameAccess(title: string, details: string): void {
   console.error(title);
   console.error(details);
-
-  localStorage.removeItem("user_id");
+  clearLaunchUser();
 
   if (shouldShowAuthDebug() && !isNativeView()) {
-    renderAuthDebugError(title, details);
+    renderBootstrapError(title, details);
     return;
   }
 
   closeCurrentView();
 }
 
-function formatError(error: unknown): string {
-  if (axios.isAxiosError(error)) {
-    const lines = [
-      `Axios error: ${error.message}`,
-      `Request URL: ${error.config?.url ?? "unknown"}`,
-      `Request method: ${error.config?.method ?? "unknown"}`,
-    ];
+function addParamsFromString(params: URLSearchParams, value: string): void {
+  if (!value.trim()) return;
 
-    if (error.response) {
-      lines.push(`Response status: ${error.response.status}`);
-      lines.push("Response data:");
-      lines.push(JSON.stringify(error.response.data, null, 2));
-    } else {
-      lines.push("No response received from server.");
-      lines.push(
-        "Possible reason: CORS issue, network issue, wrong API URL, or backend server is not reachable.",
-      );
+  const normalized = value
+    .trim()
+    .replace(/^[?#]/, "")
+    .replace(/\?/g, "&")
+    .replace(/^&/, "");
+
+  if (!normalized.includes("=")) return;
+
+  const sourceParams = new URLSearchParams(normalized);
+
+  sourceParams.forEach((paramValue, paramKey) => {
+    if (!params.has(paramKey)) {
+      params.set(paramKey, paramValue);
     }
-
-    return lines.join("\n");
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return String(error);
+  });
 }
 
-async function bootstrap(): Promise<void> {
-  localStorage.removeItem("user_id");
+function getAllUrlParams(): URLSearchParams {
+  const params = new URLSearchParams();
 
-  const params = getGameUrlParams();
+  addParamsFromString(params, window.location.search);
 
-  const userIdParam = getFirstParam(params, [
-    "userid",
-    "user_id",
-    "userId",
-    "uid",
-  ]);
+  const hashQuestionIndex = window.location.hash.indexOf("?");
 
-  const tokenParam = getFirstParam(params, [
-    "token",
-    "auth_token",
-    "authToken",
-    "access_token",
-  ]);
+  if (hashQuestionIndex >= 0) {
+    addParamsFromString(params, window.location.hash.slice(hashQuestionIndex + 1));
+  }
+
+  const hrefQuestionIndex = window.location.href.indexOf("?");
+
+  if (hrefQuestionIndex >= 0) {
+    addParamsFromString(
+      params,
+      window.location.href.slice(hrefQuestionIndex + 1).split("#")[0],
+    );
+  }
+
+  return params;
+}
+
+function getFirstParam(
+  params: URLSearchParams,
+  aliases: readonly string[],
+): string | null {
+  const aliasSet = new Set(aliases.map((alias) => alias.toLowerCase()));
+
+  for (const [key, value] of params.entries()) {
+    if (aliasSet.has(key.toLowerCase()) && value.trim() !== "") {
+      return value.trim();
+    }
+  }
+
+  return null;
+}
+
+function parseLaunchParams(): LaunchParams | null {
+  const params = getAllUrlParams();
+
+  const userIdParam = getFirstParam(params, USER_ID_PARAM_KEYS);
+  const token = getFirstParam(params, TOKEN_PARAM_KEYS);
+
+  const username =
+    getFirstParam(params, USERNAME_PARAM_KEYS) ||
+    import.meta.env.VITE_TEST_USERNAME ||
+    undefined;
+
+  const avater =
+    getFirstParam(params, AVATER_PARAM_KEYS) ||
+    import.meta.env.VITE_TEST_AVATER ||
+    import.meta.env.VITE_TEST_AVATAR ||
+    undefined;
+
+  const balanceParam =
+    getFirstParam(params, BALANCE_PARAM_KEYS) ||
+    import.meta.env.VITE_TEST_BALANCE ||
+    null;
 
   const userId = Number(userIdParam);
+  const balance = balanceParam !== null ? Number(balanceParam) : undefined;
 
   if (
     userIdParam === null ||
-    tokenParam === null ||
-    tokenParam.trim() === "" ||
+    token === null ||
     !Number.isInteger(userId) ||
-    userId <= 0
+    userId <= 0 ||
+    token.trim() === ""
   ) {
-    const message = [
-      "Game access denied.",
-      "",
-      "Reason:",
-      "Missing or invalid userid/token.",
-      "",
-      "Required URL format:",
-      "?userid=2&token=123456",
-      "",
-      "Also accepted:",
-      "?user_id=2&token=123456",
-      "#/game?userid=2&token=123456",
-      "",
-      `Current URL: ${window.location.href}`,
-      "",
-      `Received userid: ${String(userIdParam)}`,
-      `Received token: ${maskToken(tokenParam)}`,
-    ].join("\n");
-
-    denyGameAccess("Invalid game URL", message);
-    return;
+    return null;
   }
 
-  try {
-    const res = await checkIntroIntegration(userId, tokenParam);
-    const responseUserId = Number(res.user_id);
+  return {
+    userId,
+    token,
+    username,
+    avater,
+    balance: Number.isFinite(balance) ? balance : undefined,
+  };
+}
 
-    if (
-      !isSuccessStatus(res.status) ||
-      !Number.isInteger(responseUserId) ||
-      responseUserId <= 0
-    ) {
-      const message = [
+async function renderApp(): Promise<void> {
+  const { default: App } = await import("./App.tsx");
+
+  root.render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}
+
+async function bootstrap(): Promise<void> {
+  clearLaunchUser();
+
+  const launchParams = parseLaunchParams();
+
+  if (!launchParams) {
+    const params = getAllUrlParams();
+    const receivedUserId = getFirstParam(params, USER_ID_PARAM_KEYS);
+    const receivedToken = getFirstParam(params, TOKEN_PARAM_KEYS);
+
+    denyGameAccess(
+      "Invalid game URL",
+      [
         "Game access denied.",
         "",
         "Reason:",
-        "Intro API rejected this userid/token.",
+        "Missing or invalid userid/token.",
         "",
-        `userid: ${userId}`,
-        `token: ${maskToken(tokenParam)}`,
+        "Required URL format:",
+        "?userid=2&token=187871878",
         "",
-        "Intro API response:",
-        JSON.stringify(res, null, 2),
-      ].join("\n");
-
-      denyGameAccess("Intro check rejected", message);
-      return;
-    }
-
-    localStorage.setItem("user_id", responseUserId.toString());
-
-    getRoot().render(
-      <StrictMode>
-        <App />
-      </StrictMode>,
+        "Also accepted:",
+        "?userid=2?token=187871878",
+        "?user_id=2&token=187871878",
+        "#/game?userid=2&token=187871878",
+        "",
+        `Current URL: ${window.location.href}`,
+        "",
+        `Received userid: ${String(receivedUserId)}`,
+        `Received token: ${maskToken(receivedToken)}`,
+      ].join("\n"),
     );
-  } catch (error) {
-    const message = [
-      "Game access denied.",
-      "",
-      "Reason:",
-      "Intro API request failed.",
-      "",
-      "Possible reasons:",
-      "1. Backend CORS does not allow this domain.",
-      "2. API proxy is missing or wrong.",
-      "3. Backend server is down.",
-      "4. userid/token is invalid.",
-      "5. /intro API returned an error.",
-      "",
-      `userid: ${userId}`,
-      `token: ${maskToken(tokenParam)}`,
-      "",
-      formatError(error),
-    ].join("\n");
-
-    denyGameAccess("Intro API failed", message);
+    return;
   }
+
+  saveLaunchUser({
+    userId: launchParams.userId,
+    token: launchParams.token,
+    username: launchParams.username,
+    avater: launchParams.avater,
+    balance: launchParams.balance,
+  });
+
+  /**
+   * Company confirmed user integration is not needed for this game.
+   * Therefore no launch API is called here.
+   * WebSocket starts immediately after valid userid/token are found.
+   */
+  connectRealtime();
+
+  await renderApp();
 }
 
 void bootstrap();
