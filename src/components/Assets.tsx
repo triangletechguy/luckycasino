@@ -956,6 +956,7 @@ export function StartAni({ left, delay, num0, num1, num2, options }: ReelAniProp
             >
                 {rows.map((element, index) => (
                     <motion.img
+                        key={`start-${left}-${index}`}
                         src={resolveAssetUrl(options[element - 13]?.logo ?? "")}
                         className="absolute left-0 top-0 w-[65px] h-[65px]"
                         initial={{ y: 5 + index * 70, opacity: 1 }}
@@ -988,6 +989,7 @@ export function StopAni({ left, delay, num0, num1, num2, options }: ReelAniProps
             >
                 {rows.map((element, index) => (
                     <motion.img
+                        key={`stop-${left}-${index}`}
                         src={resolveAssetUrl(options[element - 13]?.logo ?? "")}
                         className="absolute left-0 top-0 w-[65px] h-[65px]"
                         initial={{ y: -65, opacity: 1 }}
@@ -1020,6 +1022,7 @@ export function RepeatAni({ left, delay, num, options }: ReelAniProps & { num: n
             >
                 {rows.map((element, index) => (
                     <motion.img
+                        key={`repeat-${left}-${index}`}
                         src={resolveAssetUrl(options[(num + element) % 7]?.logo ?? "")}
                         className="absolute left-0 top-0 w-[65px] h-[65px]"
                         initial={{ y: -65, opacity: 1 }}

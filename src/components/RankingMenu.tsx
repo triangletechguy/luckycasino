@@ -1,6 +1,6 @@
 import { ButtonMenu, CloseIcon, QuestionMarkIcon, } from "./ButtonMenu";
 import { getAssetUrl, GAME_ASSETS } from "../config/gameconfig";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { resolveAssetUrl, useGame } from "../hooks/useGameHook";
 export function HistoryIcon() {
     return (
@@ -95,7 +95,7 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                     {isTodayRanking ?
                         <>
                             {ranking?.today?.map((element, index) => (
-                                <>
+                                <Fragment key={`ranking-today-${index}-${element.user?.id}`}>
                                     {index === 0 && (
                                         <div className="relative w-[292px] h-[47px] mt-[5px] flex ">
                                             <div className="relative h-[47px] w-[47px] bg-gradient-to-br from-[#cf9800] from-1%  via-50% via-[#FFF987] to-[#fdc21f] to-90% rounded-l-[10px]">
@@ -148,13 +148,13 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                                             </div>
                                         </div>
                                     )}
-                                </>
+                                </Fragment>
                             ))}
                         </>
                         :
                         <>
                             {ranking?.yesterday?.map((element, index) => (
-                                <>
+                                <Fragment key={`ranking-yesterday-${index}-${element.user?.id}`}>
                                     {index === 0 && (
                                         <div className="relative w-[292px] h-[47px] mt-[5px] flex ">
                                             <div className="relative h-[47px] w-[47px] bg-gradient-to-br from-[#cf9800] from-1%  via-50% via-[#FFF987] to-[#fdc21f] to-90% rounded-l-[10px]">
@@ -207,7 +207,7 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                                             </div>
                                         </div>
                                     )}
-                                </>))}
+                                </Fragment>))}
                         </>}
                 </div>
                 <div className="absolute flex items-center top-[232px] left-1/2 -translate-x-1/2 w-[316px] h-[48px] bg-gradient-to-br from-[#FBBA07] from-1%  via-30% via-[#FFF987] to-[#D5831F] to-90% rounded-[9px]">

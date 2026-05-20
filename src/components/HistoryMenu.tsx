@@ -38,7 +38,7 @@ export default function HistoryMenu({ onCloseHistory }: HistoryMenuProps) {
             </div>
             <div className="absolute w-[302px] h-[371px] top-[57px] left-1/2 -translate-x-1/2 scrollbar-hidden overflow-x-hidden overflow-y-auto">
                 {history?.data?.map((element) => (
-                    <div className="relative mb-[8px] h-[141px] w-[302px] rounded-[5px]">
+                    <div key={`history-${element.id}`} className="relative mb-[8px] h-[141px] w-[302px] rounded-[5px]">
                         <div className="absolute h-[22px] w-[302px] bg-[#000000]/25 rounded-t-[5px] px-[6px] flex justify-between">
                             <span className="text-[#c6b6ff]">{element.id}</span>
                             <span className="text-[#c6b6ff]">{formatDateTime(element.created_at)}</span>
