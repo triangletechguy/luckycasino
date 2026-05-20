@@ -11,6 +11,8 @@ import {
 declare global {
   interface Window {
     Pusher: typeof Pusher;
+    __SUPER777_CONNECT_REALTIME__?: () => EchoLike;
+    __SUPER777_ECHO__?: EchoLike;
   }
 }
 
@@ -47,7 +49,7 @@ let echoInstance: EchoLike | null = null;
 
 export function connectRealtime(): EchoLike {
   if (!REALTIME_ENABLED) {
-    console.warn("Realtime disabled by VITE_REVERB_ENABLED=false");
+    console.warn("SUPER777 realtime disabled. Check VITE_REVERB_ENABLED.");
     echoInstance = noopEcho;
     return echoInstance;
   }
@@ -56,8 +58,10 @@ export function connectRealtime(): EchoLike {
     return echoInstance;
   }
 
-  const websocketUrl = `${USE_TLS ? "wss" : "ws"}://${REALTIME_HOST}:${REALTIME_PORT}/app/${REVERB_KEY}`;
-  console.info(`Connecting Reverb WebSocket: ${websocketUrl}`);
+  const protocol = USE_TLS ? "wss" : "ws";
+  const websocketUrl = `${protocol}://${REALTIME_HOST}:${REALTIME_PORT}/app/${REVERB_KEY}`;
+
+  console.info("SUPER777 connecting Reverb WebSocket:", websocketUrl);
 
   echoInstance = new Echo({
     broadcaster: "reverb",
@@ -77,6 +81,8 @@ export function connectRealtime(): EchoLike {
     namespace: false,
   }) as unknown as EchoLike;
 
+  window.__SUPER777_ECHO__ = echoInstance;
+
   return echoInstance;
 }
 
@@ -87,9 +93,12 @@ export function getRealtime(): EchoLike {
 export function disconnectRealtime(): void {
   echoInstance?.disconnect?.();
   echoInstance = null;
+  window.__SUPER777_ECHO__ = undefined;
 }
 
 export const echo: EchoLike = {
   channel: (name: string) => connectRealtime().channel(name),
   disconnect: () => disconnectRealtime(),
 };
+
+window.__SUPER777_CONNECT_REALTIME__ = connectRealtime;
