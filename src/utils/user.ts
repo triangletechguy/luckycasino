@@ -93,15 +93,3 @@ export function getRequiredUserId(): number {
 export function getUserToken(): string {
   return localStorage.getItem(USER_TOKEN_STORAGE_KEY) || "";
 }
-
-export function getRequiredUserToken(): string {
-  const token = getUserToken();
-
-  if (!token) {
-    throw new Error(
-      "Missing user token. Open the game with ?userid=USER_ID&token=TOKEN.",
-    );
-  }
-
-  return token;
-}

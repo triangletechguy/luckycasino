@@ -47,6 +47,7 @@ let echoInstance: EchoLike | null = null;
 
 export function connectRealtime(): EchoLike {
   if (!REALTIME_ENABLED) {
+    console.warn("Realtime disabled by VITE_REVERB_ENABLED=false");
     echoInstance = noopEcho;
     return echoInstance;
   }
@@ -54,6 +55,9 @@ export function connectRealtime(): EchoLike {
   if (echoInstance) {
     return echoInstance;
   }
+
+  const websocketUrl = `${USE_TLS ? "wss" : "ws"}://${REALTIME_HOST}:${REALTIME_PORT}/app/${REVERB_KEY}`;
+  console.info(`Connecting Reverb WebSocket: ${websocketUrl}`);
 
   echoInstance = new Echo({
     broadcaster: "reverb",
@@ -65,6 +69,7 @@ export function connectRealtime(): EchoLike {
 
     forceTLS: USE_TLS,
     encrypted: USE_TLS,
+
     enabledTransports: USE_TLS ? ["wss"] : ["ws"],
 
     disableStats: true,
@@ -83,3 +88,8 @@ export function disconnectRealtime(): void {
   echoInstance?.disconnect?.();
   echoInstance = null;
 }
+
+export const echo: EchoLike = {
+  channel: (name: string) => connectRealtime().channel(name),
+  disconnect: () => disconnectRealtime(),
+};

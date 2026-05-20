@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
+import App from "./App.tsx";
 import { connectRealtime } from "./hooks/echo.ts";
 import { closeCurrentView } from "./utils/closeCurrentView.ts";
 import { clearLaunchUser, saveLaunchUser } from "./utils/user.ts";
@@ -49,17 +50,11 @@ function isNativeView(): boolean {
   );
 }
 
-function shouldShowAuthDebug(): boolean {
+function shouldShowDebug(): boolean {
   return import.meta.env.DEV || import.meta.env.VITE_SHOW_AUTH_DEBUG === "true";
 }
 
-function maskToken(token: string | null | undefined): string {
-  if (!token) return "null";
-  if (token.length <= 6) return "***";
-  return `${token.slice(0, 3)}***${token.slice(-3)}`;
-}
-
-function renderBootstrapError(title: string, details: string): void {
+function renderError(title: string, details: string): void {
   root.render(
     <div
       style={{
@@ -91,10 +86,11 @@ function renderBootstrapError(title: string, details: string): void {
 function denyGameAccess(title: string, details: string): void {
   console.error(title);
   console.error(details);
+
   clearLaunchUser();
 
-  if (shouldShowAuthDebug() && !isNativeView()) {
-    renderBootstrapError(title, details);
+  if (shouldShowDebug() && !isNativeView()) {
+    renderError(title, details);
     return;
   }
 
@@ -203,26 +199,12 @@ function parseLaunchParams(): LaunchParams | null {
   };
 }
 
-async function renderApp(): Promise<void> {
-  const { default: App } = await import("./App.tsx");
-
-  root.render(
-    <StrictMode>
-      <App />
-    </StrictMode>,
-  );
-}
-
-async function bootstrap(): Promise<void> {
+function bootstrap(): void {
   clearLaunchUser();
 
   const launchParams = parseLaunchParams();
 
   if (!launchParams) {
-    const params = getAllUrlParams();
-    const receivedUserId = getFirstParam(params, USER_ID_PARAM_KEYS);
-    const receivedToken = getFirstParam(params, TOKEN_PARAM_KEYS);
-
     denyGameAccess(
       "Invalid game URL",
       [
@@ -234,15 +216,7 @@ async function bootstrap(): Promise<void> {
         "Required URL format:",
         "?userid=2&token=187871878",
         "",
-        "Also accepted:",
-        "?userid=2?token=187871878",
-        "?user_id=2&token=187871878",
-        "#/game?userid=2&token=187871878",
-        "",
         `Current URL: ${window.location.href}`,
-        "",
-        `Received userid: ${String(receivedUserId)}`,
-        `Received token: ${maskToken(receivedToken)}`,
       ].join("\n"),
     );
     return;
@@ -256,14 +230,13 @@ async function bootstrap(): Promise<void> {
     balance: launchParams.balance,
   });
 
-  /**
-   * Company confirmed user integration is not needed for this game.
-   * Therefore no launch API is called here.
-   * WebSocket starts immediately after valid userid/token are found.
-   */
   connectRealtime();
 
-  await renderApp();
+  root.render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
 }
 
-void bootstrap();
+bootstrap();

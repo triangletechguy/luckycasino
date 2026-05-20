@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, } from "framer-motion";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { GAME_ASSETS, GAME_MUSIC, getAssetUrl, getMusicUrlWithFallback } from "../config/gameconfig";
+import { Fragment, lazy, Suspense, useEffect, useRef, useState } from "react";
+import { GAME_ASSETS, GAME_MUSIC, getAssetUrl, getMusicUrl } from "../config/gameconfig";
 import { type ActivePlayers } from "../api/api"
 import MenuCoin from "./MenuCoin";
 import MenuTop from "./MenuTop";
@@ -82,7 +82,7 @@ export default function Lucky777Game({
     const [resultPending, setResultPending] = useState(false)
     const [isAutoMode, setIsAutoMode] = useState(false)
     const [isPlaying, setIsPlaying] = useState(false)
-    const { betAmounts, options, ranking, placeBet, playerInfo, ActivePlayers, winToday} = useGame()
+    const { betAmounts, options, ranking, placeBet, playerInfo, ActivePlayers, winToday } = useGame()
     const [currentBet, setCurrentBet] = useState(0)
     const [second, setSecond] = useState(0);
     const [startValue, setStartValue] = useState([13, 13, 13, 14, 14, 14, 15, 15, 15,])
@@ -107,6 +107,7 @@ export default function Lucky777Game({
     const isOverlayOpen = (activeModal !== null || prizeModal !== null || winModal === true);
     const { gameScale, viewportHeight, viewportOffsetTop } = useResponsiveGameViewport();
     const spinSoundRef = useRef<HTMLAudioElement>(null);
+    const skipNextSpinStartSoundRef = useRef(false);
     const playSpinSound = () => {
         if (!isMusicPlaying)
             return
@@ -133,6 +134,35 @@ export default function Lucky777Game({
         }
         setWinModal(false);
         setIsOpenWinAni(showFollowUpWinAni);
+    };
+
+    const getCurrentBetAmount = (): number | null => {
+        const rawAmount =
+            betAmounts[currentBet]?.amount ??
+            betAmounts[0]?.amount ??
+            "0";
+
+        const amount = Number.parseFloat(String(rawAmount));
+
+        if (!Number.isFinite(amount) || amount <= 0) {
+            return null;
+        }
+
+        return amount;
+    };
+
+    const getCurrentBalance = (): number => {
+        const balance = Number.parseFloat(String(playerInfo?.balance ?? "0"));
+
+        return Number.isFinite(balance) ? balance : 0;
+    };
+
+    const resetSpinState = () => {
+        setIsPlaying(false);
+        setSecond(0);
+        setIsRolling(false);
+        setIsResulting(false);
+        setIsPending(true);
     };
     useEffect(() => {
         const interval = setInterval(() => {
@@ -170,134 +200,224 @@ export default function Lucky777Game({
         return () => clearInterval(interval);
     }, [winModal]);
     useEffect(() => {
-        if (!isPlaying)
-            return
+        if (!isPlaying) {
+            return;
+        }
+
         const timer = setInterval(() => {
             if (second === 0) {
-                if (Number.parseFloat(playerInfo?.balance ?? "0") < Number.parseFloat(betAmounts[currentBet]?.amount)) {
-                    setIsPlaying(false)
-                    setSecond(0)
-                    return
+                if (skipNextSpinStartSoundRef.current) {
+                    skipNextSpinStartSoundRef.current = false;
+                } else {
+                    playSpinSound();
                 }
-                setWinModal(false)
-                setIsOpenWinAni(false)
-                void placeBet(Number.parseFloat(betAmounts[currentBet]?.amount))
+
+                const betAmount = getCurrentBetAmount();
+
+                if (betAmount === null) {
+                    console.warn("Cannot spin: invalid bet amount.", {
+                        currentBet,
+                        betAmounts,
+                    });
+
+                    resetSpinState();
+                    return;
+                }
+
+                const currentBalance = getCurrentBalance();
+
+                if (currentBalance > 0 && currentBalance < betAmount) {
+                    console.warn("Cannot spin: insufficient balance.", {
+                        currentBalance,
+                        betAmount,
+                    });
+
+                    resetSpinState();
+                    return;
+                }
+
+                setWinModal(false);
+                setIsOpenWinAni(false);
+
+                void placeBet(betAmount)
                     .then((response) => {
-                        setEndValue([response.result.set_A[0].option_id, response.result.set_A[1].option_id, response.result.set_A[2].option_id,
-                        response.result.set_B[0].option_id, response.result.set_B[1].option_id, response.result.set_B[2].option_id,
-                        response.result.set_C[0].option_id, response.result.set_C[1].option_id, response.result.set_C[2].option_id,])
-                        setStartValue([response.result.set_A[0].option_id, response.result.set_A[1].option_id, response.result.set_A[2].option_id,
-                        response.result.set_B[0].option_id, response.result.set_B[1].option_id, response.result.set_B[2].option_id,
-                        response.result.set_C[0].option_id, response.result.set_C[1].option_id, response.result.set_C[2].option_id,])
-                        setWinAmount(Number.parseFloat(response.win_amount))
-                        setActiveModal(null)
-                        setPrizeModal(null)
-                        setNormalResult(response.win_type);
-                        if (response.win_type === null) setNormalWin(true)
-                        else setNormalWin(false)
+                        setEndValue([
+                            response.result.set_A[0].option_id,
+                            response.result.set_A[1].option_id,
+                            response.result.set_A[2].option_id,
+                            response.result.set_B[0].option_id,
+                            response.result.set_B[1].option_id,
+                            response.result.set_B[2].option_id,
+                            response.result.set_C[0].option_id,
+                            response.result.set_C[1].option_id,
+                            response.result.set_C[2].option_id,
+                        ]);
+
+                        setStartValue([
+                            response.result.set_A[0].option_id,
+                            response.result.set_A[1].option_id,
+                            response.result.set_A[2].option_id,
+                            response.result.set_B[0].option_id,
+                            response.result.set_B[1].option_id,
+                            response.result.set_B[2].option_id,
+                            response.result.set_C[0].option_id,
+                            response.result.set_C[1].option_id,
+                            response.result.set_C[2].option_id,
+                        ]);
+
+                        setWinAmount(Number.parseFloat(response.win_amount));
+                        setActiveModal(null);
+                        setPrizeModal(null);
+                        setNormalResult(response.win_type ?? null);
+
+                        if (response.win_type === null || response.win_type === undefined) {
+                            setNormalWin(true);
+                        } else {
+                            setNormalWin(false);
+                        }
                     })
+                    .catch((error) => {
+                        console.error("Failed to place bet:", error);
+                        resetSpinState();
+                    });
+
                 setStatusArray([0, 0, 0, 0, 0, 0, 0, 0, 0]);
-                setShowWinAmount(0)
-                setForCoinBoard(Number(playerInfo?.balance) - Number.parseFloat(betAmounts[currentBet]?.amount))
-                setIsWinAniShowed(false)
-                setIsFirst(false)
-                setResultPending(false)
-                setIsResulting(false)
+                setShowWinAmount(0);
+                setForCoinBoard(Math.max(0, currentBalance - betAmount));
+                setIsWinAniShowed(false);
+                setIsFirst(false);
+                setResultPending(false);
+                setIsResulting(false);
                 setIsPending(false);
                 setIsRolling(true);
             }
-          
+
             if (second === 2900) {
                 setStatusArray((prev) => {
                     const newStatus = [...prev];
-                    if ((endValue[0] === endValue[4] && endValue[0] === endValue[8]) || (endValue[0] === 17 && endValue[4] === 17)) {
+
+                    if (
+                        (endValue[0] === endValue[4] && endValue[0] === endValue[8]) ||
+                        (endValue[0] === 17 && endValue[4] === 17)
+                    ) {
                         newStatus[0] = 1;
                         newStatus[4] = 1;
                         newStatus[8] = 1;
                     }
-                    if ((endValue[6] === endValue[4] && endValue[6] === endValue[2]) || (endValue[6] === 17 && endValue[4] === 17)) {
+
+                    if (
+                        (endValue[6] === endValue[4] && endValue[6] === endValue[2]) ||
+                        (endValue[6] === 17 && endValue[4] === 17)
+                    ) {
                         newStatus[4] = 1;
                         newStatus[6] = 1;
                         newStatus[2] = 1;
                     }
-                    if ((endValue[0] === endValue[1] && endValue[0] === endValue[2]) || (endValue[0] === 17 && endValue[1] === 17)) {
+
+                    if (
+                        (endValue[0] === endValue[1] && endValue[0] === endValue[2]) ||
+                        (endValue[0] === 17 && endValue[1] === 17)
+                    ) {
                         newStatus[0] = 1;
                         newStatus[1] = 1;
                         newStatus[2] = 1;
                     }
-                    if ((endValue[3] === endValue[4] && endValue[3] === endValue[5]) || (endValue[3] === 17 && endValue[4] === 17)) {
+
+                    if (
+                        (endValue[3] === endValue[4] && endValue[3] === endValue[5]) ||
+                        (endValue[3] === 17 && endValue[4] === 17)
+                    ) {
                         newStatus[3] = 1;
                         newStatus[4] = 1;
                         newStatus[5] = 1;
                     }
-                    if ((endValue[6] === endValue[7] && endValue[6] === endValue[8]) || (endValue[6] === 17 && endValue[7] === 17)) {
+
+                    if (
+                        (endValue[6] === endValue[7] && endValue[6] === endValue[8]) ||
+                        (endValue[6] === 17 && endValue[7] === 17)
+                    ) {
                         newStatus[6] = 1;
                         newStatus[7] = 1;
                         newStatus[8] = 1;
                     }
+
                     return newStatus;
                 });
-                setIsRolling(false)
-                setIsResulting(true)
-                setShowWinAmount(winAmount)
-              
+
+                setIsRolling(false);
+                setIsResulting(true);
+                setShowWinAmount(winAmount);
+
                 if (normalWin) {
-                    setWinModal(false)
-                    setIsOpenWinAni(true)
+                    setWinModal(false);
+                    setIsOpenWinAni(true);
                 } else {
-                    setWinModal(true)
+                    setWinModal(true);
                 }
             }
+
             if (normalWin) {
                 if (second === 3300) {
-                    setForCoinBoard(0)
+                    setForCoinBoard(0);
                 }
+
                 if (second === 4900) {
                     if (isAutoMode) {
-                        setSecond(-100)
-                    }
-                    else {
+                        setSecond(-100);
+                    } else {
                         if (winAmount) {
-                            setResultPending(true)
+                            setResultPending(true);
                         } else {
-                            setIsResulting(false)
-                            setIsPending(true)
+                            setIsResulting(false);
+                            setIsPending(true);
                         }
-                        setIsPlaying(false)
-                        setSecond(0)
-                        return
+
+                        setIsPlaying(false);
+                        setSecond(0);
+                        return;
                     }
                 }
-            }
-            else {
+            } else {
                 if (second === 5900) {
-                    setForCoinBoard(0)
+                    setForCoinBoard(0);
                 }
+
                 if (second === 6900) {
                     if (isAutoMode) {
-                        setSecond(-100)
-                        setIsResulting(false)
-                    }
-                    else {
+                        setSecond(-100);
+                        setIsResulting(false);
+                    } else {
                         if (winAmount) {
-                            setResultPending(true)
+                            setResultPending(true);
                         } else {
-                            setIsResulting(false)
-                            setIsPending(true)
+                            setIsResulting(false);
+                            setIsPending(true);
                         }
-                        setIsPlaying(false)
-                        setSecond(0)
-                        return
+
+                        setIsPlaying(false);
+                        setSecond(0);
+                        return;
                     }
                 }
             }
 
             setSecond((s) => s + 100);
         }, 100);
+
         return () => {
-            clearInterval(timer)
+            clearInterval(timer);
         };
-    }, [second, isPlaying])
+    }, [
+        second,
+        isPlaying,
+        currentBet,
+        betAmounts,
+        playerInfo,
+        endValue,
+        winAmount,
+        normalWin,
+        isAutoMode,
+    ])
 
     const getClass = (name: string) => {
         const pressedClass = pressedBtn === name ? "top-[10px]" : "top-0";
@@ -447,28 +567,28 @@ export default function Lucky777Game({
                                             {isFirst ? (
                                                 <>
                                                     {rows.map((element) => (
-                                                        <>
-                                                            <img src={resolveAssetUrl(options[element]?.logo ?? "0")} alt="a" className="absolute   h-[65px] w-[65px]"
+                                                        <Fragment key={`initial-row-${element}`}>
+                                                            <img src={resolveAssetUrl(options[element]?.logo)} alt="a" className="absolute   h-[65px] w-[65px]"
                                                                 style={{ left: `${26}px`, top: `${10 + element * 70}px` }} />
                                                             <img src={resolveAssetUrl(options[element]?.logo)} alt="b" className="absolute   h-[65px] w-[65px]"
                                                                 style={{ left: `${123}px`, top: `${10 + element * 70}px` }} />
                                                             <img src={resolveAssetUrl(options[element]?.logo)} alt="c" className="absolute   h-[65px] w-[65px]"
                                                                 style={{ left: `${218}px`, top: `${10 + element * 70}px` }} />
-                                                        </>
+                                                        </Fragment>
                                                     ))}
                                                 </>
                                             ) : (
                                                 <>
                                                     {endValue.map((element, index) => (
-                                                        <>
+                                                        <Fragment key={`pending-result-${index}-${element}`}>
                                                             {index % 3 === 0 && (
-                                                                <img src={resolveAssetUrl(options[element - 13]?.logo ?? "0")} alt="a" className="absolute   h-[65px] w-[65px]"
+                                                                <img src={resolveAssetUrl(options[element - 13]?.logo)} alt="a" className="absolute   h-[65px] w-[65px]"
                                                                     style={{ left: `${26}px`, top: `${10 + Math.floor(index / 3) * 70}px` }} />)}
                                                             {index % 3 === 1 && (<img src={resolveAssetUrl(options[element - 13]?.logo)} alt="b" className="absolute   h-[65px] w-[65px]"
                                                                 style={{ left: `${123}px`, top: `${10 + Math.floor(index / 3) * 70}px` }} />)}
                                                             {index % 3 === 2 && (<img src={resolveAssetUrl(options[element - 13]?.logo)} alt="c" className="absolute   h-[65px] w-[65px]"
                                                                 style={{ left: `${218}px`, top: `${10 + Math.floor(index / 3) * 70}px` }} />)}
-                                                        </>
+                                                        </Fragment>
                                                     ))}
                                                 </>
                                             )}
@@ -508,11 +628,11 @@ export default function Lucky777Game({
                                     </>)}
                                     {isResulting && (<>
                                         {endValue.map((element, index) => (
-                                            <>
+                                            <Fragment key={`result-${index}-${element}`}>
                                                 {index % 3 === 0 && (
                                                     <>
                                                         {statusArray[index] ?
-                                                            <motion.img src={resolveAssetUrl(options[element - 13]?.logo ?? "0")} alt="a" className="absolute   h-[65px] w-[65px]"
+                                                            <motion.img src={resolveAssetUrl(options[element - 13]?.logo)} alt="a" className="absolute   h-[65px] w-[65px]"
                                                                 style={{ left: `${26}px`, top: `${10 + Math.floor(index / 3) * 70}px`, }}
                                                                 animate={{
                                                                     opacity: [1, 0, 1, 0,],
@@ -524,7 +644,7 @@ export default function Lucky777Game({
                                                                     repeat: Infinity
                                                                 }} />
                                                             :
-                                                            <img src={resolveAssetUrl(options[element - 13]?.logo ?? "0")} alt="a" className="absolute transition opacity-50  h-[65px] w-[65px]"
+                                                            <img src={resolveAssetUrl(options[element - 13]?.logo)} alt="a" className="absolute transition opacity-50  h-[65px] w-[65px]"
                                                                 style={{ left: `${26}px`, top: `${10 + Math.floor(index / 3) * 70}px`, }} />
                                                         }
                                                     </>)}
@@ -566,7 +686,7 @@ export default function Lucky777Game({
                                                                 style={{ left: `${218}px`, top: `${10 + Math.floor(index / 3) * 70}px`, }} />
                                                         }
                                                     </>)}
-                                            </>
+                                            </Fragment>
                                         ))}</>)}
                                     <div className="absolute inset-0 z-30 pointer-events-none">
                                         {isPending && (
@@ -619,7 +739,7 @@ export default function Lucky777Game({
                                 <div className="relative h-[26] grid grid-cols-3 pl-[4px]">
                                     <div className="flex bg-[#000000] h-[24px] w-[100px] rounded-[4px] pt-[2px] pl-[4px]">
                                         <span className="absolute right-[220px]"
-                                            style={{ fontFamily: "MyBoldFont", letterSpacing: "2px" }}>{parseFloat(betAmounts[currentBet]?.amount).toString()}</span>
+                                            style={{ fontFamily: "MyBoldFont", letterSpacing: "2px" }}>{getCurrentBetAmount()?.toString() ?? "0"}</span>
                                     </div>
                                     <div className="bg-[#000000] h-[24px] w-[100px] rounded-[4px] text-center">
                                         <span className="bg-gradient-to-t from-[#EFC32F] to-[#FBF9D2] bg-clip-text text-transparent font-bold text-[17px] align-middle ">{formatNumber(Number(winToday?.win ?? 0))}</span>
@@ -647,7 +767,6 @@ export default function Lucky777Game({
                                     onPointerUp={() => setPressedBtn(null)}
                                     onPointerLeave={() => setPressedBtn(null)}
                                     onClick={() => {
-                                        playSpinSound();
                                         if (currentBet) setCurrentBet(currentBet - 1);
                                     }}
                                 >
@@ -659,9 +778,9 @@ export default function Lucky777Game({
                                     onPointerUp={() => setPressedBtn(null)}
                                     onPointerLeave={() => setPressedBtn(null)}
                                     onClick={() => {
-                                        playSpinSound();
-                                        if (currentBet + 1 !== betAmounts.length)
+                                        if (currentBet + 1 < betAmounts.length) {
                                             setCurrentBet(currentBet + 1);
+                                        }
                                     }}
                                 >
                                     <img src={getAssetUrl(GAME_ASSETS.plusBtn)} alt="betplu" />
@@ -676,7 +795,18 @@ export default function Lucky777Game({
                                             setIsAutoMode(false);
                                             setPressedBtn(null)
                                         } else {
+                                            const betAmount = getCurrentBetAmount();
+
+                                            if (betAmount === null) {
+                                                console.warn("Auto mode blocked: invalid bet amount.", {
+                                                    currentBet,
+                                                    betAmounts,
+                                                });
+                                                return;
+                                            }
+
                                             playSpinSound();
+                                            skipNextSpinStartSoundRef.current = true;
                                             setIsAutoMode(true);
                                             setIsPlaying(true);
                                         }
@@ -690,7 +820,18 @@ export default function Lucky777Game({
                                     onPointerUp={() => setPressedBtn(null)}
                                     onPointerLeave={() => setPressedBtn(null)}
                                     onClick={() => {
+                                        const betAmount = getCurrentBetAmount();
+
+                                        if (betAmount === null) {
+                                            console.warn("Spin blocked: invalid bet amount.", {
+                                                currentBet,
+                                                betAmounts,
+                                            });
+                                            return;
+                                        }
+
                                         playSpinSound();
+                                        skipNextSpinStartSoundRef.current = true;
                                         dismissWinModal(false);
                                         setIsPlaying(true);
                                     }}
@@ -859,7 +1000,7 @@ export default function Lucky777Game({
                         )}
                         <audio
                             ref={spinSoundRef}
-                            src={getMusicUrlWithFallback(GAME_MUSIC.sound)}
+                            src={getMusicUrl(GAME_MUSIC.sound)}
                             preload="metadata"
                             playsInline
                         />

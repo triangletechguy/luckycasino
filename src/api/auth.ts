@@ -1,6 +1,6 @@
 /**
- * Company confirmed user integration is not needed for this game.
- * Keep this file only for backwards compatibility with old imports.
+ * User integration is not needed for this game.
+ * This file exists only for old imports.
  */
 
 export type IntroResponse = {

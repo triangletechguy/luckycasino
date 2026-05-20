@@ -5,8 +5,6 @@ export type RuntimeGameConfig = {
   backendOrigin?: string;
   apiBaseUrl?: string;
   assetBaseUrl?: string;
-  soundEffectFile?: string;
-  backgroundMusicFile?: string;
   reverbHost?: string;
   reverbPort?: number | string;
   reverbScheme?: "http" | "https";
@@ -49,21 +47,12 @@ export const BACKEND_ORIGIN = normalizeBaseUrl(
     DEFAULT_BACKEND_ORIGIN,
 );
 
-export const APP_ORIGIN =
-  typeof window !== "undefined" && window.location.origin
-    ? window.location.origin
-    : BACKEND_ORIGIN;
-
 export const API_BASE_URL = normalizeBaseUrl(
   runtimeConfig.apiBaseUrl || import.meta.env.VITE_API_BASE_URL || "/api",
 );
 
-/**
- * User integration is NOT needed for this game.
- * Keep these constants only for compatibility. Do not call them during launch.
- */
-export const USER_INTEGRATION_API_URL = `${API_BASE_URL}/user-integration`;
 export const INTRO_API_URL = `${API_BASE_URL}/intro`;
+export const USER_INTEGRATION_API_URL = `${API_BASE_URL}/user-integration`;
 export const GAMES_API_URL = `${API_BASE_URL}/games`;
 
 export const GAME_DETAILS_API_URL = `${API_BASE_URL}/game-details/${GAME_ID}`;
@@ -91,9 +80,7 @@ export const REVERB_KEY =
   "k6dbocgucm0at6gwak3y";
 
 export const REALTIME_HOST =
-  runtimeConfig.reverbHost ||
-  import.meta.env.VITE_REVERB_HOST ||
-  new URL(BACKEND_ORIGIN).hostname;
+  runtimeConfig.reverbHost || import.meta.env.VITE_REVERB_HOST || "funint.site";
 
 export const REALTIME_SCHEME =
   runtimeConfig.reverbScheme ||
@@ -122,14 +109,33 @@ export const REALTIME_EVENT =
 export const ACTIVE_CHANNEL = "user-activity";
 export const ACTIVE_EVENT = "user-activity.updated";
 
-export function getAssetUrl(path: string): string {
-  if (!path) return "";
+const FALLBACK_IMAGE_ASSET = "super777/diamond.svg";
 
-  if (/^https?:\/\//i.test(path)) {
-    return path;
+function normalizeAssetPath(path?: string | null): string {
+  if (!path) return FALLBACK_IMAGE_ASSET;
+
+  const normalized = String(path).trim();
+
+  if (
+    normalized === "" ||
+    normalized === "0" ||
+    normalized.toLowerCase() === "null" ||
+    normalized.toLowerCase() === "undefined"
+  ) {
+    return FALLBACK_IMAGE_ASSET;
   }
 
-  const normalizedPath = path.replace(/^\/+/, "");
+  return normalized;
+}
+
+export function getAssetUrl(path?: string | null): string {
+  const safePath = normalizeAssetPath(path);
+
+  if (/^https?:\/\//i.test(safePath)) {
+    return safePath;
+  }
+
+  const normalizedPath = safePath.replace(/^\/+/, "");
   const storagePrefix = "core/storage/app/public/";
   const storagePathIndex = normalizedPath.indexOf(storagePrefix);
 
@@ -141,10 +147,9 @@ export function getAssetUrl(path: string): string {
 }
 
 export const MUSIC_BASE_URL = `${ASSET_BASE_URL}/super777`;
-export const SOUND_BASE_URL = `${ASSET_BASE_URL}/super777`;
 
-export function getMusicUrl(path: string): string {
-  if (!path) return "";
+export function getMusicUrl(path?: string | null): string {
+  if (!path || !path.trim()) return "";
 
   if (/^https?:\/\//i.test(path)) {
     return path;
@@ -177,14 +182,8 @@ export function getMusicUrlWithFallback(
 }
 
 export const GAME_MUSIC = {
-  sound:
-    runtimeConfig.soundEffectFile ||
-    import.meta.env.VITE_SOUND_EFFECT_FILE ||
-    "supper7.mp3",
-  music:
-    runtimeConfig.backgroundMusicFile ||
-    import.meta.env.VITE_BACKGROUND_MUSIC_FILE ||
-    "super7.mp3",
+  sound: "supper7.mp3",
+  music: "super7.mp3",
 };
 
 export const GAME_ASSETS = {
