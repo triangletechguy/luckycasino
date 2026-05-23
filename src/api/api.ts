@@ -200,6 +200,18 @@ export type BetPlaceResponse = {
   success?: boolean;
   status?: "win" | "lost" | string | boolean | number;
   win_amount: string;
+  balance?: string | number;
+  current_balance?: string | number;
+  post_balance?: string | number;
+  new_balance?: string | number;
+  wallet_balance?: string | number;
+  data?: {
+    balance?: string | number;
+    current_balance?: string | number;
+    post_balance?: string | number;
+    new_balance?: string | number;
+    wallet_balance?: string | number;
+  };
   result: {
     set_A: SlotElement[];
     set_B: SlotElement[];

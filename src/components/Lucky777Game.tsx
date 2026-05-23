@@ -66,6 +66,66 @@ function formatNumber(num: number): string {
     }
     return num.toString();
 }
+
+function parseMoneyOrNull(value: unknown): number | null {
+    if (typeof value === "number") {
+        return Number.isFinite(value) ? value : null;
+    }
+
+    if (typeof value === "string") {
+        const normalized = value.replace(/[^0-9.-]/g, "");
+        const parsed = Number.parseFloat(normalized);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    return null;
+}
+
+function parseMoney(value: unknown): number {
+    return parseMoneyOrNull(value) ?? 0;
+}
+
+function getBalanceFromBetResponse(response: {
+    balance?: string | number;
+    current_balance?: string | number;
+    post_balance?: string | number;
+    new_balance?: string | number;
+    wallet_balance?: string | number;
+    data?: {
+        balance?: string | number;
+        current_balance?: string | number;
+        post_balance?: string | number;
+        new_balance?: string | number;
+        wallet_balance?: string | number;
+    };
+}): number | null {
+    const candidates = [
+        response.current_balance,
+        response.balance,
+        response.post_balance,
+        response.new_balance,
+        response.wallet_balance,
+        response.data?.current_balance,
+        response.data?.balance,
+        response.data?.post_balance,
+        response.data?.new_balance,
+        response.data?.wallet_balance,
+    ];
+
+    for (const candidate of candidates) {
+        if (candidate === undefined || candidate === null || candidate === "") {
+            continue;
+        }
+
+        const parsed = parseMoneyOrNull(candidate);
+
+        if (parsed !== null) {
+            return parsed;
+        }
+    }
+
+    return null;
+}
 export default function Lucky777Game({
     onToggleMusic,
     isMusicPlaying,
@@ -92,7 +152,7 @@ export default function Lucky777Game({
     const [showWinAmount, setShowWinAmount] = useState(0)
     const [isWinAniShowed, setIsWinAniShowed] = useState(false)
     const [pressedBtn, setPressedBtn] = useState<string | null>(null);
-    const [forCoinBoard, setForCoinBoard] = useState(0)
+    const [forCoinBoard, setForCoinBoard] = useState<number | null>(null)
     const [normalWin, setNormalWin] = useState(true)
     const [normalResult, setNormalResult] = useState<string | null>(null);
     const [isOpenWinAni, setIsOpenWinAni] = useState(false)
@@ -104,6 +164,7 @@ export default function Lucky777Game({
     const rows = [0, 1, 2];
     const [num, setNum] = useState(0);
     const [winModal, setWinModal] = useState(false)
+    const latestWinAmountRef = useRef(0);
     const isOverlayOpen = (activeModal !== null || prizeModal !== null || winModal === true);
     const { gameScale, viewportHeight, viewportOffsetTop } = useResponsiveGameViewport();
     const spinSoundRef = useRef<HTMLAudioElement>(null);
@@ -152,9 +213,7 @@ export default function Lucky777Game({
     };
 
     const getCurrentBalance = (): number => {
-        const balance = Number.parseFloat(String(playerInfo?.balance ?? "0"));
-
-        return Number.isFinite(balance) ? balance : 0;
+        return parseMoney(playerInfo?.balance);
     };
 
     const resetSpinState = () => {
@@ -182,23 +241,30 @@ export default function Lucky777Game({
     }, [ActivePlayers])
     useEffect(() => {
         if (!winModal) {
-            return
+            setNum(0);
+            return;
         }
-        let i = 0;
-        let j = 0;
-        j = Math.floor(showWinAmount / 150)
-        const interval = setInterval(() => {
-            i += j
-            setNum(i);
 
-            if (i >= showWinAmount) {
-                setNum(showWinAmount)
+        if (showWinAmount <= 0) {
+            setNum(0);
+            return;
+        }
+
+        let current = 0;
+        const increment = Math.max(1, Math.ceil(showWinAmount / 150));
+        setNum(0);
+
+        const interval = setInterval(() => {
+            current = Math.min(showWinAmount, current + increment);
+            setNum(current);
+
+            if (current >= showWinAmount) {
                 clearInterval(interval);
             }
         }, 10);
 
         return () => clearInterval(interval);
-    }, [winModal]);
+    }, [winModal, showWinAmount]);
     useEffect(() => {
         if (!isPlaying) {
             return;
@@ -238,6 +304,8 @@ export default function Lucky777Game({
 
                 setWinModal(false);
                 setIsOpenWinAni(false);
+                setWinAmount(0);
+                latestWinAmountRef.current = 0;
 
                 void placeBet(betAmount)
                     .then((response) => {
@@ -265,7 +333,14 @@ export default function Lucky777Game({
                             response.result.set_C[2].option_id,
                         ]);
 
-                        setWinAmount(Number.parseFloat(response.win_amount));
+                        const parsedWinAmount = parseMoney(response.win_amount);
+                        const responseBalance = getBalanceFromBetResponse(response);
+                        const nextBalance = responseBalance ?? Math.max(0, currentBalance - betAmount + parsedWinAmount);
+
+                        latestWinAmountRef.current = parsedWinAmount;
+                        setWinAmount(parsedWinAmount);
+                        setShowWinAmount(parsedWinAmount);
+                        setForCoinBoard(nextBalance);
                         setActiveModal(null);
                         setPrizeModal(null);
                         setNormalResult(response.win_type ?? null);
@@ -293,6 +368,8 @@ export default function Lucky777Game({
             }
 
             if (second === 2900) {
+                const roundWinAmount = latestWinAmountRef.current;
+
                 setStatusArray((prev) => {
                     const newStatus = [...prev];
 
@@ -346,7 +423,7 @@ export default function Lucky777Game({
 
                 setIsRolling(false);
                 setIsResulting(true);
-                setShowWinAmount(winAmount);
+                setShowWinAmount(roundWinAmount);
 
                 if (normalWin) {
                     setWinModal(false);
@@ -358,14 +435,14 @@ export default function Lucky777Game({
 
             if (normalWin) {
                 if (second === 3300) {
-                    setForCoinBoard(0);
+                    setForCoinBoard(null);
                 }
 
                 if (second === 4900) {
                     if (isAutoMode) {
                         setSecond(-100);
                     } else {
-                        if (winAmount) {
+                        if (showWinAmount > 0) {
                             setResultPending(true);
                         } else {
                             setIsResulting(false);
@@ -379,7 +456,7 @@ export default function Lucky777Game({
                 }
             } else {
                 if (second === 5900) {
-                    setForCoinBoard(0);
+                    setForCoinBoard(null);
                 }
 
                 if (second === 6900) {
@@ -387,7 +464,7 @@ export default function Lucky777Game({
                         setSecond(-100);
                         setIsResulting(false);
                     } else {
-                        if (winAmount) {
+                        if (showWinAmount > 0) {
                             setResultPending(true);
                         } else {
                             setIsResulting(false);
@@ -414,7 +491,7 @@ export default function Lucky777Game({
         betAmounts,
         playerInfo,
         endValue,
-        winAmount,
+        showWinAmount,
         normalWin,
         isAutoMode,
     ])

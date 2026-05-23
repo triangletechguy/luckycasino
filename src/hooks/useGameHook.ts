@@ -22,6 +22,7 @@ import {
   type PlayerDetailsData,
   type ActivePlayers,
   type ACtivePlayersData,
+  type BetPlaceResponse,
 } from "../api/api";
 import {
   ACTIVE_CHANNEL,
@@ -71,6 +72,9 @@ let hasActive = false;
 let initialLoadPromise: Promise<void> | null = null;
 let gameRefreshPromise: Promise<void> | null = null;
 let gameRefreshQueued = false;
+const LOCAL_BALANCE_GUARD_TTL_MS = 15_000;
+let localBalanceGuard: number | null = null;
+let localBalanceGuardSetAt = 0;
 
 type ActivePlayersEvent = {
   data?: ACtivePlayersData[];
@@ -93,6 +97,131 @@ function updateStore(
   emit();
 }
 
+function parseMoney(value: unknown): number | null {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.replace(/[^0-9.-]/g, "");
+    const parsed = Number.parseFloat(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
+function formatMoney(value: number): string {
+  if (!Number.isFinite(value)) return "0";
+
+  return Number.isInteger(value)
+    ? String(value)
+    : value.toFixed(2).replace(/\.?0+$/, "");
+}
+
+function getBalanceFromBetResponse(response: BetPlaceResponse): number | null {
+  const candidates = [
+    response.current_balance,
+    response.balance,
+    response.post_balance,
+    response.new_balance,
+    response.wallet_balance,
+    response.data?.current_balance,
+    response.data?.balance,
+    response.data?.post_balance,
+    response.data?.new_balance,
+    response.data?.wallet_balance,
+  ];
+
+  for (const candidate of candidates) {
+    const parsed = parseMoney(candidate);
+
+    if (parsed !== null) {
+      return parsed;
+    }
+  }
+
+  return null;
+}
+
+function setLocalBalanceGuard(balance: number) {
+  localBalanceGuard = balance;
+  localBalanceGuardSetAt = Date.now();
+}
+
+function clearLocalBalanceGuard() {
+  localBalanceGuard = null;
+  localBalanceGuardSetAt = 0;
+}
+
+function getActiveLocalBalanceGuard(): number | null {
+  if (localBalanceGuard === null) {
+    return null;
+  }
+
+  if (Date.now() - localBalanceGuardSetAt > LOCAL_BALANCE_GUARD_TTL_MS) {
+    clearLocalBalanceGuard();
+    return null;
+  }
+
+  return localBalanceGuard;
+}
+
+function getKnownPlayerBalance(): number | null {
+  const guarded = getActiveLocalBalanceGuard();
+
+  if (guarded !== null) {
+    return guarded;
+  }
+
+  return parseMoney(store.playerInfo?.balance);
+}
+
+function mergePlayerInfoWithGuard(
+  incoming: PlayerDetailsData | null | undefined,
+  current: PlayerDetailsData | null,
+): PlayerDetailsData | null {
+  const hasIncoming = incoming !== null && incoming !== undefined;
+  const hasCurrent = current !== null && current !== undefined;
+
+  if (!hasIncoming && !hasCurrent) {
+    return null;
+  }
+
+  const baseInfo: PlayerDetailsData = {
+    ...(current ?? {}),
+    ...(incoming ?? {}),
+  };
+
+  const guardedBalance = getActiveLocalBalanceGuard();
+
+  if (guardedBalance === null) {
+    return baseInfo;
+  }
+
+  const incomingBalance = parseMoney(incoming?.balance);
+
+  if (incomingBalance !== null && Math.abs(incomingBalance - guardedBalance) < 0.0001) {
+    clearLocalBalanceGuard();
+    return baseInfo;
+  }
+
+  return {
+    ...baseInfo,
+    balance: formatMoney(guardedBalance),
+  };
+}
+
+function updatePlayerBalance(balance: number) {
+  setLocalBalanceGuard(balance);
+  updateStore((current) => ({
+    playerInfo: {
+      ...(current.playerInfo ?? {}),
+      balance: formatMoney(balance),
+    },
+  }));
+}
+
 async function runRefreshGameData() {
   updateStore({ isLoading: true, isMusicSettingLoading: true });
   const [gameDetail, ranking, jackpot, player, url, prizeDistribution, isMusicEnabled, winToday, history] =
@@ -109,6 +238,8 @@ async function runRefreshGameData() {
     ]);
 
   const failedRequests: string[] = [];
+  let hasFetchedPlayerInfo = false;
+  let fetchedPlayerInfo: PlayerDetailsData | null = null;
 
   const nextState: Partial<GameStore> = {
     isMusicSettingLoading: false,
@@ -124,8 +255,10 @@ async function runRefreshGameData() {
   if (jackpot.status === "fulfilled") nextState.jackpot = jackpot.value.amount;
   else failedRequests.push("jackpot");
 
-  if (player.status === "fulfilled") nextState.playerInfo = player.value;
-  else failedRequests.push("player");
+  if (player.status === "fulfilled") {
+    hasFetchedPlayerInfo = true;
+    fetchedPlayerInfo = player.value;
+  } else failedRequests.push("player");
 
   if (url.status === "fulfilled") nextState.url = url.value;
   else failedRequests.push("recharge url");
@@ -149,7 +282,17 @@ async function runRefreshGameData() {
     );
   }
 
-  updateStore(nextState);
+  updateStore((current) => ({
+    ...nextState,
+    ...(hasFetchedPlayerInfo
+      ? {
+          playerInfo: mergePlayerInfoWithGuard(
+            fetchedPlayerInfo,
+            current.playerInfo,
+          ),
+        }
+      : {}),
+  }));
 }
 
 function refreshGameDataWithQueue(): Promise<void> {
@@ -273,15 +416,34 @@ const handleWinToday= useCallback(async () => {
   }
 }, []);
 
-  const handlePlaceBet = useCallback(async ( amount: number,) => {
-    // const currentBalance = Number.parseFloat(store.playerInfo?.balance ?? "0");
-    // if (currentBalance < amount) {
-    //   // throw new Error("Insufficient balance");
-    // }
-    const response: betPlace = await betPlace(amount, );
-    
-    return response;
-  }, []);
+  const handlePlaceBet = useCallback(async (amount: number) => {
+  const previousBalance = getKnownPlayerBalance();
+  const response: betPlace = await betPlace(amount);
+  const responseBalance = getBalanceFromBetResponse(response);
+  const winAmount = parseMoney(response.win_amount) ?? 0;
+  const nextBalance =
+    responseBalance ??
+    (previousBalance !== null ? Math.max(0, previousBalance - amount + winAmount) : null);
+
+  if (nextBalance !== null) {
+    updatePlayerBalance(nextBalance);
+  }
+
+  // Keep the local store aligned with the backend. The optimistic update above
+  // makes the UI change immediately, and this request corrects it if the server
+  // applies any extra wallet rule.
+  void fetchPlayerInfo()
+    .then((data) => {
+      updateStore((current) => ({
+        playerInfo: mergePlayerInfoWithGuard(data, current.playerInfo),
+      }));
+    })
+    .catch((error) => {
+      console.warn("Failed to refresh player balance after bet", error);
+    });
+
+  return response;
+}, []);
 
 const handleSetMusicEnabled = useCallback(async (nextValue: boolean) => {
     await saveMusicSetting( nextValue);
@@ -304,7 +466,9 @@ const handleJackPot= useCallback(async () => {
   }, []);
 const handlePlayerInfo= useCallback(async () => {
     const data = await fetchPlayerInfo();
-    updateStore({playerInfo:data})
+    updateStore((current) => ({
+      playerInfo: mergePlayerInfoWithGuard(data, current.playerInfo),
+    }));
     return data;
   }, []);
 const clearCurrentRoundBets = useCallback(() => {
