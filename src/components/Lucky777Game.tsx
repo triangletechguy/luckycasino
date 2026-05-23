@@ -142,7 +142,7 @@ export default function Lucky777Game({
     const [resultPending, setResultPending] = useState(false)
     const [isAutoMode, setIsAutoMode] = useState(false)
     const [isPlaying, setIsPlaying] = useState(false)
-    const { betAmounts, options, ranking, placeBet, playerInfo, ActivePlayers, winToday } = useGame()
+    const { betAmounts, options, ranking, placeBet, playerInfo, ActivePlayers, winToday, handlePlayerInfo } = useGame()
     const [currentBet, setCurrentBet] = useState(0)
     const [second, setSecond] = useState(0);
     const [startValue, setStartValue] = useState([13, 13, 13, 14, 14, 14, 15, 15, 15,])
@@ -165,6 +165,7 @@ export default function Lucky777Game({
     const [num, setNum] = useState(0);
     const [winModal, setWinModal] = useState(false)
     const latestWinAmountRef = useRef(0);
+    const pendingCollectedBalanceRef = useRef<number | null>(null);
     const isOverlayOpen = (activeModal !== null || prizeModal !== null || winModal === true);
     const { gameScale, viewportHeight, viewportOffsetTop } = useResponsiveGameViewport();
     const spinSoundRef = useRef<HTMLAudioElement>(null);
@@ -193,6 +194,16 @@ export default function Lucky777Game({
         if (!winModal) {
             return;
         }
+
+        const pendingCollectedBalance = pendingCollectedBalanceRef.current;
+
+        if (pendingCollectedBalance !== null) {
+            setForCoinBoard(pendingCollectedBalance);
+            void handlePlayerInfo().catch((error) => {
+                console.warn("Failed to sync player info after win collection", error);
+            });
+        }
+
         setWinModal(false);
         setIsOpenWinAni(showFollowUpWinAni);
     };
@@ -213,6 +224,10 @@ export default function Lucky777Game({
     };
 
     const getCurrentBalance = (): number => {
+        if (forCoinBoard !== null) {
+            return forCoinBoard;
+        }
+
         return parseMoney(playerInfo?.balance);
     };
 
@@ -306,6 +321,7 @@ export default function Lucky777Game({
                 setIsOpenWinAni(false);
                 setWinAmount(0);
                 latestWinAmountRef.current = 0;
+                pendingCollectedBalanceRef.current = null;
 
                 void placeBet(betAmount)
                     .then((response) => {
@@ -338,6 +354,7 @@ export default function Lucky777Game({
                         const nextBalance = responseBalance ?? Math.max(0, currentBalance - betAmount + parsedWinAmount);
 
                         latestWinAmountRef.current = parsedWinAmount;
+                        pendingCollectedBalanceRef.current = nextBalance;
                         setWinAmount(parsedWinAmount);
                         setShowWinAmount(parsedWinAmount);
                         setForCoinBoard(nextBalance);
