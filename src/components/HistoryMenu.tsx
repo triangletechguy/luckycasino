@@ -77,7 +77,7 @@ export default function HistoryMenu({ onCloseHistory }: HistoryMenuProps) {
                             </div>
                             <div className="m-[10px] flex">
                                 <img src={getAssetUrl(GAME_ASSETS.diamond)} alt="coin" className="mt-[2px] w-[15px] h-[15px]" />
-                                <span className="text-[#c6b6ff]">{`${Number(element.post_balance)} => ${Number(element.current_balance)}`}</span>
+                                <span className="text-[#c6b6ff]">{`${Number(element.post_balance) - Number(element.bet_amount)} + ${Number(element.win_amount)} = ${Number(element.current_balance)}`}</span>
                             </div>
                         </div >
                     </div >

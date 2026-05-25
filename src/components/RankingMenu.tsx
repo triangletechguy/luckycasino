@@ -1,7 +1,18 @@
 import { ButtonMenu, CloseIcon, QuestionMarkIcon, } from "./ButtonMenu";
 import { getAssetUrl, GAME_ASSETS } from "../config/gameconfig";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { resolveAssetUrl, useGame } from "../hooks/useGameHook";
+
+const toAmount = (value?: string) => {
+    const parsed = Number((value ?? "0").replaceAll(",", ""));
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+const sortByWinningAmount = <T extends { total_win: string }>(items?: T[]) => {
+    if (!items) return [];
+
+    return [...items].sort((a, b) => toAmount(b.total_win) - toAmount(a.total_win));
+}
 export function HistoryIcon() {
     return (
         <svg width="14" height="14" viewBox="0 0 15 15" fill="none" aria-hidden="true">
@@ -22,6 +33,14 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
     const [result, setResult] = useState(0);
     const [time, setTime] = useState("");
     const { handleRemainingToday, ranking, jackpot } = useGame()
+    const todayRanking = useMemo(
+        () => sortByWinningAmount(ranking?.today),
+        [ranking?.today],
+    );
+    const yesterdayRanking = useMemo(
+        () => sortByWinningAmount(ranking?.yesterday),
+        [ranking?.yesterday],
+    );
     
     useEffect(() => {
         const load = async () => {
@@ -84,17 +103,19 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                 {isTodayRanking && (<span className="relative mt-[2px]"><HistoryIcon /></span>)}
                 <span className="text-[#12F49E] text-[12px] font-sans">{isTodayRanking ? time : "Yesterday Ranking"}</span>
             </div>
-            <span className="absolute top-[155px] h-[45px] w-[250px] left-1/2 -translate-x-1/2 text-center font-sans text-[12px]">{ranking?.gift}</span>
+            <span className="absolute top-[155px] h-[45px] w-[250px] left-1/2 -translate-x-1/2 text-center font-sans text-[12px]">
+                The top 15 players on the leaderboard can receive a large number of diamonds based on the amount of diamonds played.
+            </span>
             <div className="absolute w-[316px] h-[266px] top-[210px] left-1/2 -translate-x-1/2 bg-[#000000]/25 rounded-[5px]">
                 <div className="flex items-center justify-between w-[280px] pl-[20px] pt-[10px]">
                     <span className="relative font-sans text-[#ffffff]/60">Ranking</span>
                     <span className=" relative pr-[20px] font-sans text-[#ffffff]/60">Name</span>
-                    <span className=" relative font-sans text-[#ffffff]/60">Diamonds Play</span>
+                    <span className=" relative font-sans text-[#ffffff]/60">Total Win Amount</span>
                 </div>
                 <div className="absolute top-[35px] w-[292px] h-[201px] left-1/2 -translate-x-1/2 scrollbar-hidden overflow-x-hidden overflow-y-auto">
                     {isTodayRanking ?
                         <>
-                            {ranking?.today?.map((element, index) => (
+                            {todayRanking.map((element, index) => (
                                 <Fragment key={`ranking-today-${index}-${element.user?.id}`}>
                                     {index === 0 && (
                                         <div className="relative w-[292px] h-[47px] mt-[5px] flex ">
@@ -105,7 +126,7 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                                                 <img src={resolveAssetUrl(element?.user?.avater ?? "")} alt="avatar" className="border-[1px] border-[#ffa806] ml-[10px] h-[35px] w-[35px] rounded-full" />
                                                 <span className="absolute left-[60px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{element?.user?.username}</span>
                                                 <img src={getAssetUrl(GAME_ASSETS.diamond)} alt="diamond" className="absolute left-[130px] h-[30px] w-[30px]" />
-                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{Number(element?.total_bet)}</span>
+                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{Number(element?.total_win)}</span>
                                             </div>
                                         </div>
                                     )}
@@ -118,7 +139,7 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                                                 <img src={resolveAssetUrl(element?.user?.avater ?? "")} alt="avatar" className="border-[1px] border-[#ffa806] ml-[10px] h-[35px] w-[35px]  rounded-full" />
                                                 <span className="absolute left-[60px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{element?.user?.username}</span>
                                                 <img src={getAssetUrl(GAME_ASSETS.diamond)} alt="diamond" className="absolute left-[130px] h-[30px] w-[30px]" />
-                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{Number(element.total_bet)}</span>
+                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{Number(element.total_win)}</span>
                                             </div>
                                         </div>
                                     )}
@@ -131,7 +152,7 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                                                 <img src={resolveAssetUrl(element?.user?.avater ?? "")} alt="avatar" className="border-[1px] border-[#ffa806] ml-[10px] h-[35px] w-[35px]  rounded-full" />
                                                 <span className="absolute left-[60px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{element?.user?.username}</span>
                                                 <img src={getAssetUrl(GAME_ASSETS.diamond)} alt="diamond" className="absolute left-[130px] h-[30px] w-[30px]" />
-                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{Number(element.total_bet)}</span>
+                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{Number(element.total_win)}</span>
                                             </div>
                                         </div>
                                     )}
@@ -144,7 +165,7 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                                                 <img src={resolveAssetUrl(element?.user?.avater ?? "")} alt="avatar" className="border-[1px] border-[#ffa806] ml-[10px] h-[35px] w-[35px]  rounded-full" />
                                                 <span className="absolute left-[60px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] h-[40px] w-[80px] content-center">{element?.user?.username}</span>
                                                 <img src={getAssetUrl(GAME_ASSETS.diamond)} alt="diamond" className="absolute left-[130px] h-[30px] w-[30px]" />
-                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] h-[40px] w-[80px] content-center">{Number(element.total_bet)}</span>
+                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] h-[40px] w-[80px] content-center">{Number(element.total_win)}</span>
                                             </div>
                                         </div>
                                     )}
@@ -153,7 +174,7 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                         </>
                         :
                         <>
-                            {ranking?.yesterday?.map((element, index) => (
+                            {yesterdayRanking.map((element, index) => (
                                 <Fragment key={`ranking-yesterday-${index}-${element.user?.id}`}>
                                     {index === 0 && (
                                         <div className="relative w-[292px] h-[47px] mt-[5px] flex ">
@@ -164,7 +185,7 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                                                 <img src={resolveAssetUrl(element?.user?.avater ?? "")} alt="avatar" className="border-[1px] border-[#ffa806] ml-[10px] h-[35px] w-[35px]  rounded-full" />
                                                 <span className="absolute left-[60px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{element?.user?.username}</span>
                                                 <img src={getAssetUrl(GAME_ASSETS.diamond)} alt="diamond" className="absolute left-[130px] h-[30px] w-[30px]" />
-                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{Number(element?.total_bet)}</span>
+                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{Number(element?.total_win)}</span>
                                             </div>
                                         </div>
                                     )}
@@ -177,7 +198,7 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                                                 <img src={resolveAssetUrl(element?.user?.avater ?? "")} alt="avatar" className="border-[1px] border-[#ffa806] ml-[10px] h-[35px] w-[35px]  rounded-full" />
                                                 <span className="absolute left-[60px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{element?.user?.username}</span>
                                                 <img src={getAssetUrl(GAME_ASSETS.diamond)} alt="diamond" className="absolute left-[130px] h-[30px] w-[30px]" />
-                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{Number(element.total_bet)}</span>
+                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{Number(element.total_win)}</span>
                                             </div>
                                         </div>
                                     )}
@@ -190,7 +211,7 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                                                 <img src={resolveAssetUrl(element?.user?.avater ?? "")} alt="avatar" className="border-[1px] border-[#ffa806] ml-[10px] h-[35px] w-[35px]  rounded-full" />
                                                 <span className="absolute left-[60px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{element?.user?.username}</span>
                                                 <img src={getAssetUrl(GAME_ASSETS.diamond)} alt="diamond" className="absolute left-[130px] h-[30px] w-[30px]" />
-                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{Number(element.total_bet)}</span>
+                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] rounded-l-[10px] h-[40px] w-[80px] content-center">{Number(element.total_win)}</span>
                                             </div>
                                         </div>
                                     )}
@@ -203,7 +224,7 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                                                 <img src={resolveAssetUrl(element?.user?.avater ?? "")} alt="avatar" className="border-[1px] border-[#ffa806] ml-[10px] h-[35px] w-[35px]  rounded-full" />
                                                 <span className="absolute left-[60px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] h-[40px] w-[80px] content-center">{element?.user?.username}</span>
                                                 <img src={getAssetUrl(GAME_ASSETS.diamond)} alt="diamond" className="absolute left-[130px] h-[30px] w-[30px]" />
-                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] h-[40px] w-[80px] content-center">{Number(element.total_bet)}</span>
+                                                <span className="absolute left-[160px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] h-[40px] w-[80px] content-center">{Number(element.total_win)}</span>
                                             </div>
                                         </div>
                                     )}
@@ -234,7 +255,7 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                                         <img src={resolveAssetUrl(ranking?.today_my_ranking?.avater ?? "")} alt="avatar" className=" ml-[10px] h-[35px] w-[35px]  border-[1px] border-[#ffa806] rounded-full" />
                                         <span className="absolute left-[110px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] h-[40px] w-[80px] content-center">{ranking?.today_my_ranking?.username}</span>
                                         <img src={getAssetUrl(GAME_ASSETS.diamond)} alt="diamond" className="absolute left-[190px] h-[30px] w-[30px]" />
-                                        <span className="absolute left-[220px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] h-[40px] w-[80px] content-center">{Number(ranking?.today_my_ranking?.total_bet)}</span>
+                                        <span className="absolute left-[220px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] h-[40px] w-[80px] content-center">{Number(ranking?.today_my_ranking?.total_win)}</span>
                                     </>}
                             </> : <>{ranking?.yesterday_my_ranking !== null &&
                                 <>{ranking?.yesterday_my_ranking?.position !== undefined &&
@@ -258,7 +279,7 @@ export default function Ranking({ onCloseRanking, onOpenPrizeDistribution }: Ran
                                     <img src={resolveAssetUrl(ranking?.yesterday_my_ranking?.avater ?? "")} alt="avatar" className=" ml-[10px] h-[35px] w-[35px]  border-[1px] border-[#ffa806] rounded-full" />
                                     <span className="absolute left-[110px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] h-[40px] w-[80px] content-center">{ranking?.yesterday_my_ranking?.username}</span>
                                     <img src={getAssetUrl(GAME_ASSETS.diamond)} alt="diamond" className="absolute left-[190px] h-[30px] w-[30px]" />
-                                    <span className="absolute left-[220px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] h-[40px] w-[80px] content-center">{Number(ranking?.yesterday_my_ranking?.total_bet)}</span>
+                                    <span className="absolute left-[220px] text-[#fde4c7] font-bold [text-shadow:1px_0_0_brown,-1px_0_0_brown,0_1px_0_brown,0_-1px_0_brown] h-[40px] w-[80px] content-center">{Number(ranking?.yesterday_my_ranking?.total_win)}</span>
                                 </>
                             }
                             </>
